@@ -19,6 +19,7 @@ public class ThirdPersonController : MonoBehaviour {
 		camera_rot = playercamera.transform.rotation;
 		Debug.Log("PlayerMgr:" + ThirdPersonManager.Instance);
 		player = ThirdPersonManager.Instance.CreateCharacter(1000);
+		ThirdPersonManager.Instance.CreateCharacter(1001);
 	}
 
 	// Update is called once per frame

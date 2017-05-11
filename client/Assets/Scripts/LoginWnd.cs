@@ -17,5 +17,6 @@ public class LoginWnd : MonoBehaviour {
 
 	void login() {
 		Debug.Log("click!");
+		SceneManager.Instance.SwitchScene("GameScene");
 	}
 }

@@ -21,7 +21,6 @@ public class ThirdPerson : MonoBehaviour {
 		set { uid = value; }
 	}
 
-	// Use this for initialization
 	void Start () {
 		RB = GetComponent<Rigidbody>();
 		animator = GetComponent<Animator>();
@@ -31,7 +30,6 @@ public class ThirdPerson : MonoBehaviour {
 			RigidbodyConstraints.FreezeRotationZ;
 	}
 
-	// Update is called once per frame
 	void Update () {
 
 	}
@@ -56,6 +54,8 @@ public class ThirdPerson : MonoBehaviour {
 	}
 
 	public void OnAnimatorMove() {
+		if (animator == null)
+			return ;
 		Vector3 v = (animator.deltaPosition * speed_multiplier) / Time.deltaTime;
 		v.y = RB.velocity.y;
 		RB.velocity = v;

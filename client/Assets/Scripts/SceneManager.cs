@@ -11,8 +11,9 @@ public class SceneManager : MonoBehaviour {
 	public static SceneManager Instance {
 		get {
 			if (inst == null) {
-				GameObject go = new GameObject();
-				inst = go.AddComponent<SceneManager>();
+				GameObject go = Resources.Load("Prefabs/SceneManager", typeof(GameObject)) as GameObject;
+				go = Instantiate(go) as GameObject;
+				inst = go.GetComponent<SceneManager>();
 			}
 			return inst;
 		}
@@ -35,8 +36,8 @@ public class SceneManager : MonoBehaviour {
 		if (pool.ContainsKey(name))
 			scene = pool[name];
 		if (scene == null) {
-			scene = Resources.Load("Assets/Prefabs/" + name) as GameObject;
-			Debug.Log("SwitchScene:"+ this + ":" + name + ":" + scene);
+			scene = Resources.Load("Prefabs/" + name, typeof(GameObject)) as GameObject;
+			scene = Instantiate(scene) as GameObject;
 			Debug.Assert(scene != null);
 			pool[name] = scene;
 		}
