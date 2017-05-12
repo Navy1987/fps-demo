@@ -1,0 +1,3 @@
+[submodule "server/silly"]
+	path = server/silly
+	url = git@github.com:findstr/silly

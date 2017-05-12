@@ -1,0 +1,5 @@
+foo 0x01 {
+	.hello:integer 1
+	.world:string 2
+}
+
