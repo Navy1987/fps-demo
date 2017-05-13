@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -93,6 +93,9 @@ namespace zprotobuf
 		public abstract string _name();
 		protected abstract int _encode_field(ref dll.args arg);
 		protected abstract int _decode_field(ref dll.args arg);
+		public abstract int _serialize(out byte[] dat);
+		public abstract int _parse(byte[] dat, int size);
+		public abstract int _tag();
 	}
 
 	public class wiretree {
@@ -117,6 +120,11 @@ namespace zprotobuf
 			IntPtr st = dll.query(Z, name);
 			cache[name] = st;
 			return st;
+		}
+
+		public int tag(string name) {
+			IntPtr st = query(name);
+			return dll.tag(st);
 		}
 
 		private void expand() {
@@ -150,15 +158,15 @@ namespace zprotobuf
 			}
 			return sz;
 		}
-		public int decode(wire obj, byte[] data) {
+		public int decode(wire obj, byte[] data, int size) {
 			int len = bufflen;
 			IntPtr st = query(obj._name());
-			while (bufflen < data.Length)
+			while (bufflen < size)
 				bufflen *= 2;
 			if (bufflen != len)
 				buff = Marshal.ReAllocHGlobal(buff, (IntPtr)bufflen);
-			Marshal.Copy(data, 0, buff, data.Length);
-			return obj._decode(buff, data.Length, st);
+			Marshal.Copy(data, 0, buff, size);
+			return obj._decode(buff, size, st);
 		}
 	}
 }

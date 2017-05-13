@@ -1,5 +1,19 @@
-foo 0x01 {
+
+error 0x01 {
+	.cmd:integer 1
+	.err:integer 2
+}
+
+r_foo 0x02 {
 	.hello:integer 1
 	.world:string 2
 }
+
+a_foo 0x03 {
+	.hello:integer 1
+	.world:integer 2
+}
+
+
+
 
