@@ -8,7 +8,7 @@ using zprotobuf;
 
 public class NetProtocol {
 	static private NetProtocol inst = null;
-	public delegate int cb_t(int err, wire obj);
+	public delegate void cb_t(int err, wire obj);
 	private byte[] buffer = new byte[8];
 	private short length_val = 0;
 	private error error_response = new error();
@@ -24,17 +24,17 @@ public class NetProtocol {
 		}
 	}
 
-	private int error(int err, wire obj) {
+	private void error(int err, wire obj) {
 		error errobj = (error)obj;
 		int cmd = errobj.cmd;
 		int errno = errobj.err;
 		if (!protocol_obj.ContainsKey(cmd)) {
 			Debug.Log("[NetProtocol] can't has handler of cmd[" + cmd + "]");
-			return 0;
+			return ;
 		}
 		cb_t cb = protocol_cb[cmd];
 		cb(errno, null);
-		return 0;
+		return ;
 	}
 
 	NetProtocol() {
@@ -43,6 +43,7 @@ public class NetProtocol {
 
 
 	public void Connect(string addr, int port) {
+		length_val = 0;
 		socket.Connect(addr, port);
 	}
 
@@ -52,7 +53,7 @@ public class NetProtocol {
 	}
 
 	public bool isConnected() {
-		return socket.Status == NetSocket.CONNECTED;
+		return socket.Status != NetSocket.DISCONNECT;
 	}
 
 	public bool Send(wire obj) {
@@ -68,6 +69,7 @@ public class NetProtocol {
 		System.BitConverter.GetBytes(len).CopyTo(buffer, 0);
 		System.BitConverter.GetBytes(cmd).CopyTo(buffer, 2);
 		dat.CopyTo(buffer, 6);
+		Debug.Log("Send:" + BitConverter.ToString(buffer));
 		socket.Send(buffer);
 		return true;
 	}
@@ -89,6 +91,7 @@ public class NetProtocol {
 			socket.Read(buffer, 2);
 			length_val = BitConverter.ToInt16(buffer, 0);
 			length_val = System.Net.IPAddress.NetworkToHostOrder(length_val);
+			Debug.Log(":: Need:" + length_val);
 		}
 		if (socket.Length < length_val)
 			return ;
@@ -104,6 +107,7 @@ public class NetProtocol {
 		}
 		wire obj = protocol_obj[cmd];
 		int err = obj._parse(buffer, length_val);
+		length_val = 0;
 		Debug.Log("[NetProtocol] Process cmd[" + obj._name() + "]Err:" + err);
 		if (err < 0)
 			return ;

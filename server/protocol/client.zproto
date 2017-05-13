@@ -1,19 +1,64 @@
+vector3 {
+	.x:integer 1
+	.y:integer 2
+	.z:integer 3
+}
+
+rotation {
+	.x:integer 1
+	.y:integer 2
+	.z:integer 3
+	.w:integer 4
+}
 
 error 0x01 {
 	.cmd:integer 1
 	.err:integer 2
 }
 
-r_foo 0x02 {
-	.hello:integer 1
-	.world:string 2
+#################account
+r_create 0x02 {
+	.user:string 1
+	.passwd:string 2
 }
 
-a_foo 0x03 {
-	.hello:integer 1
-	.world:integer 2
+a_create 0x03 {
+	.uid:integer 1
 }
 
+r_challenge 0x04 {
 
+}
 
+a_challenge 0x05 {
+	.randomkey:string 1
+}
+
+r_login 0x06 {
+	.user:string 1
+	.passwd:string 2
+}
+
+a_login 0x07 {
+	.uid:integer 1
+}
+
+#######
+r_join 0x101 {
+
+}
+
+a_join 0x102 {
+
+}
+
+r_sync 0x103 {
+	.pos:vector3 1
+	.rot:rotation 2
+}
+
+a_sync 0x104 {
+	.pos:vector3 1
+	.rot:rotation 2
+}
 

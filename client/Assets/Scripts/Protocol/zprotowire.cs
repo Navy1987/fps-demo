@@ -28,7 +28,7 @@ namespace zprotobuf
 			uds[id] = null;
 		}
 
-		private int write(ref dll.args arg, byte[] src) {
+		protected int write(ref dll.args arg, byte[] src) {
 			if (src.Length > arg.buffsz)
 				return dll.OOM;
 			Marshal.Copy(src, 0, arg.buff, src.Length);
@@ -42,11 +42,6 @@ namespace zprotobuf
 
 		protected int write(ref dll.args arg, int val) {
 			byte[] src = BitConverter.GetBytes(val);
-			return write(ref arg, src);
-		}
-
-		protected int write(ref dll.args arg, string val) {
-			byte[] src = Encoding.ASCII.GetBytes(val);
 			return write(ref arg, src);
 		}
 
@@ -69,9 +64,8 @@ namespace zprotobuf
 			val = BitConverter.ToInt32(read(ref arg), 0);
 			return arg.buffsz;
 		}
-		protected int read(ref dll.args arg, out string val) {
-			val = "";
-			val = Encoding.Default.GetString(read(ref arg));
+		protected int read(ref dll.args arg, out byte[] val) {
+			val = read(ref arg);
 			return arg.buffsz;
 		}
 

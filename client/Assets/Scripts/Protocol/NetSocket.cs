@@ -19,6 +19,7 @@ class Stream {
 	}
 
 	public int Write(byte[]dat, int offset, int size) {
+		Debug.Log(":: Write:" + size);
 		int need = length + size;
 		if (buffer == null)
 			buffer = new byte[need];
@@ -33,19 +34,25 @@ class Stream {
 	}
 
 	public int Read(byte[] dat, int offset, int size) {
+		Debug.Log(":: Begin Read:" + size + ":" + length);
 		if (length < size)
 			return 0;
 		Buffer.BlockCopy(buffer, 0, dat, offset, size);
 		length -= size;
 		Buffer.BlockCopy(buffer, size, buffer, 0, length);
+		Debug.Log(":: Read:" + size + ":" + length);
 		return size;
 	}
-
+	public void Clear() {
+		Debug.Log(":: Clear");
+		length = 0;
+	}
 }
 
 public class NetSocket {
-	public const int CONNECTED = 1;
-	public const int DISCONNECT = 2;
+	public const int CONNECTING = 1;
+	public const int CONNECTED = 2;
+	public const int DISCONNECT = 3;
 
 	private Socket s = null;
 	private int status = DISCONNECT;
@@ -75,6 +82,7 @@ public class NetSocket {
 			Debug.Log("RecvCB: Disconnect");
 			obj.status = DISCONNECT;
 			obj.s.Close();
+			obj.readstream.Clear();
 		}
 	}
 
@@ -105,12 +113,14 @@ public class NetSocket {
 	public void Connect(string addr, int port) {
 		s = new Socket(AddressFamily.InterNetwork,
 				SocketType.Stream, ProtocolType.Tcp);
+		status =  CONNECTING;
 		s.BeginConnect(addr, port,
 				new AsyncCallback(ConnectCB), this);
 		return ;
 	}
 
 	public void Close() {
+		readstream.Clear();
 		s.Close();
 		status = DISCONNECT;
 	}
