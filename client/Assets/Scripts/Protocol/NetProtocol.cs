@@ -90,7 +90,7 @@ public class NetProtocol {
 			socket.Read(buffer, 2);
 			length_val = BitConverter.ToInt16(buffer, 0);
 			length_val = System.Net.IPAddress.NetworkToHostOrder(length_val);
-			//Debug.Log(":: Need:" + length_val);
+			Debug.Log(":: Need:" + length_val);
 		}
 		if (socket.Length < length_val)
 			return ;
@@ -98,6 +98,7 @@ public class NetProtocol {
 			buffer = new byte[length_val];
 		socket.Read(buffer, 4);
 		int cmd = BitConverter.ToInt32(buffer, 0);
+		Debug.Assert(length_val > 4);
 		length_val -= sizeof(int);
 		socket.Read(buffer, length_val);
 		if (!protocol_obj.ContainsKey(cmd)) {

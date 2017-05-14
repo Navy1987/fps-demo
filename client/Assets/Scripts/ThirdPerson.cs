@@ -37,11 +37,12 @@ public class ThirdPerson : MonoBehaviour {
 		if (animator == null)
 			return ;
 		float forward_amount = Vector3.Distance(pos, transform.position);
-		//Debug.Log("Forward old" + uid + transform.position + pos + forward_amount);
-		//animator.SetFloat("Forward", forward_amount, 0.1f, Time.deltaTime);
-		//animator.SetFloat("Turn", 0f, 0.1f, Time.deltaTime);
+		Debug.Log("Forward old" + uid + transform.position + pos + forward_amount);
+		animator.SetFloat("Forward", forward_amount, 0.1f, Time.deltaTime);
+		animator.SetFloat("Turn", 0f, 0.1f, Time.deltaTime);
 		transform.position = pos;
 		transform.rotation = rot;
+		animator.speed = speed_multiplier;
 	}
 
 	public void Move(Vector3 move, bool crouch, bool jump) {
