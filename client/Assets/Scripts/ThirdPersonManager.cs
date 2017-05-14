@@ -92,6 +92,8 @@ public class ThirdPersonManager : MonoBehaviour {
 		rot.z = (float)ack.rot.z / RESOLUTION;
 		rot.w = (float)ack.rot.w / RESOLUTION;
 		Debug.Log("RecvSync" + "uid:"+ uid + ":" + ack.pos.x + "," + ack.pos.y + "," + ack.pos.z + pos + rot);
+		if (Player.Instance.Uid == uid)
+			return ;
 		ThirdPerson p = GetCharacter(uid);
 		if (p == null) {
 			Debug.Log("ASYC UID NULL:" + uid);
