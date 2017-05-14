@@ -19,7 +19,7 @@ class Stream {
 	}
 
 	public int Write(byte[]dat, int offset, int size) {
-		Debug.Log(":: Write:" + size);
+		//Debug.Log(":: Write:" + size);
 		int need = length + size;
 		if (buffer == null)
 			buffer = new byte[need];
@@ -34,13 +34,13 @@ class Stream {
 	}
 
 	public int Read(byte[] dat, int offset, int size) {
-		Debug.Log(":: Begin Read:" + size + ":" + length);
+		//Debug.Log(":: Begin Read:" + size + ":" + length);
 		if (length < size)
 			return 0;
 		Buffer.BlockCopy(buffer, 0, dat, offset, size);
 		length -= size;
 		Buffer.BlockCopy(buffer, size, buffer, 0, length);
-		Debug.Log(":: Read:" + size + ":" + length);
+		//Debug.Log(":: Read:" + size + ":" + length);
 		return size;
 	}
 	public void Clear() {
@@ -65,14 +65,11 @@ public class NetSocket {
 		NetSocket obj = (NetSocket) ar.AsyncState;
 		if (obj.sendq.Count == 0)
 			return ;
-		Debug.Log("SendCB:" + obj.sendq.Count);
 		byte[] a = (byte[]) obj.sendq.Dequeue();
 		SocketError err = obj.doSend(a);
-		Debug.Log("SendCB Result:" + err);
 		return ;
 	}
 	private static void RecvCB(IAsyncResult ar) {
-		Debug.Log("RecvCB");
 		NetSocket obj = (NetSocket) ar.AsyncState;
 		int read = obj.s.EndReceive(ar);
 		if (read > 0) {
@@ -102,7 +99,6 @@ public class NetSocket {
 	}
 	private SocketError doSend(byte[] data) {
 		SocketError err;
-		Debug.Log("doSend:" + data.Length);
 		s.BeginSend(data, 0, data.Length,
 			SocketFlags.None,
 			out err,

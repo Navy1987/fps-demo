@@ -71,6 +71,10 @@ public class ThirdPersonManager : MonoBehaviour {
 		sync.rot.y = (int)(player.transform.rotation.y * RESOLUTION);
 		sync.rot.z = (int)(player.transform.rotation.z * RESOLUTION);
 		sync.rot.w = (int)(player.transform.rotation.w * RESOLUTION);
+		Debug.Log("SendSync" + "uid:"+ uid + ":" +
+				transform.position + transform.rotation +
+				sync.pos.x + "," +sync.pos.y + "," + sync.pos.z
+				);
 		NetProtocol.Instance.Send(sync);
 
 	}
@@ -87,7 +91,12 @@ public class ThirdPersonManager : MonoBehaviour {
 		rot.y = (float)ack.rot.y / RESOLUTION;
 		rot.z = (float)ack.rot.z / RESOLUTION;
 		rot.w = (float)ack.rot.w / RESOLUTION;
+		Debug.Log("RecvSync" + "uid:"+ uid + ":" + ack.pos.x + "," + ack.pos.y + "," + ack.pos.z + pos + rot);
 		ThirdPerson p = GetCharacter(uid);
+		if (p == null) {
+			Debug.Log("ASYC UID NULL:" + uid);
+			return ;
+		}
 		p.Sync(pos, rot);
 	}
 }

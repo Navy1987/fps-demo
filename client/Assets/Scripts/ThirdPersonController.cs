@@ -63,9 +63,9 @@ public class ThirdPersonController : MonoBehaviour {
 		playercamera.transform.rotation = rot * camera_rot;
 		playercamera.transform.position += playercamera.transform.rotation * camera_pos;
 		delta += Time.deltaTime;
-		if (delta < 1f)
+		if (delta < 0.1f)
 			return ;
 		delta -= 1f;
-		ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
+		//ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
 	}
 }

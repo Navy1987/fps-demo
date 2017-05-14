@@ -69,7 +69,6 @@ public class NetProtocol {
 		System.BitConverter.GetBytes(len).CopyTo(buffer, 0);
 		System.BitConverter.GetBytes(cmd).CopyTo(buffer, 2);
 		dat.CopyTo(buffer, 6);
-		Debug.Log("Send:" + BitConverter.ToString(buffer));
 		socket.Send(buffer);
 		return true;
 	}
@@ -91,7 +90,7 @@ public class NetProtocol {
 			socket.Read(buffer, 2);
 			length_val = BitConverter.ToInt16(buffer, 0);
 			length_val = System.Net.IPAddress.NetworkToHostOrder(length_val);
-			Debug.Log(":: Need:" + length_val);
+			//Debug.Log(":: Need:" + length_val);
 		}
 		if (socket.Length < length_val)
 			return ;
@@ -108,7 +107,7 @@ public class NetProtocol {
 		wire obj = protocol_obj[cmd];
 		int err = obj._parse(buffer, length_val);
 		length_val = 0;
-		Debug.Log("[NetProtocol] Process cmd[" + obj._name() + "]Err:" + err);
+		//Debug.Log("[NetProtocol] Process cmd[" + obj._name() + "]Err:" + err);
 		if (err < 0)
 			return ;
 		cb_t cb = protocol_cb[cmd];
