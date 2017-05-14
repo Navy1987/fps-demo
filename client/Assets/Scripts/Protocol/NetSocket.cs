@@ -66,20 +66,25 @@ public class NetSocket {
 		if (obj.sendq.Count == 0)
 			return ;
 		byte[] a = (byte[]) obj.sendq.Dequeue();
-		SocketError err = obj.doSend(a);
+		obj.doSend(a);
 		return ;
 	}
+
 	private static void RecvCB(IAsyncResult ar) {
 		NetSocket obj = (NetSocket) ar.AsyncState;
 		int read = obj.s.EndReceive(ar);
 		if (read > 0) {
-			obj.readstream.Write(obj.buffer, 0, read);
+			lock (obj.readstream) {
+				obj.readstream.Write(obj.buffer, 0, read);
+			}
 			obj.doRecv();
 		} else {
 			Debug.Log("RecvCB: Disconnect");
 			obj.status = DISCONNECT;
 			obj.s.Close();
-			obj.readstream.Clear();
+			lock (obj.readstream) {
+				obj.readstream.Clear();
+			}
 		}
 	}
 
@@ -116,7 +121,9 @@ public class NetSocket {
 	}
 
 	public void Close() {
-		readstream.Clear();
+		lock(readstream) {
+			readstream.Clear();
+		}
 		s.Close();
 		status = DISCONNECT;
 	}
@@ -144,6 +151,8 @@ public class NetSocket {
 	public int Read(byte[] data, int sz) {
 		if (readstream.Length < sz)
 			return 0;
-		return readstream.Read(data, 0, sz);
+		lock (readstream) {
+			return readstream.Read(data, 0, sz);
+		}
 	}
 }
