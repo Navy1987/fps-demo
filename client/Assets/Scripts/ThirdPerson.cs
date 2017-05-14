@@ -13,7 +13,6 @@ public class ThirdPerson : MonoBehaviour {
 
 	//turn amount
 	private float turn_amount;
-	private float forward_amount;
 
 	private int uid;
 	public int Uid {
@@ -34,15 +33,19 @@ public class ThirdPerson : MonoBehaviour {
 
 	}
 
-	void UpdateAnimator(Vector3 move) {
+	public void Sync(Vector3 pos, Quaternion rot) {
 		if (animator == null)
 			return ;
+		Debug.Log("Forward x:" + pos.x + " y:" + pos.y + " z:" + pos.z);
+		float forward_amount = Vector3.Distance(pos, transform.position);
 		animator.SetFloat("Forward", forward_amount, 0.1f, Time.deltaTime);
-		animator.SetFloat("Turn", turn_amount, 0.1f, Time.deltaTime);
-		animator.speed = speed_multiplier;
+		//animator.SetFloat("Turn", 0f, 0.1f, Time.deltaTime);
+		transform.position = pos;
+		transform.rotation = rot;
 	}
 
 	public void Move(Vector3 move, bool crouch, bool jump) {
+		/*
 		if (move.magnitude > 1f)
 			move.Normalize();
 		move = transform.InverseTransformDirection(move);
@@ -53,13 +56,6 @@ public class ThirdPerson : MonoBehaviour {
 		turnangle = turn_amount * turnangle * Time.deltaTime;
 		transform.Rotate(0, turnangle, 0);
 		UpdateAnimator(move);
-	}
-
-	public void OnAnimatorMove() {
-		if (animator == null)
-			return ;
-		Vector3 v = (animator.deltaPosition * speed_multiplier) / Time.deltaTime;
-		v.y = RB.velocity.y;
-		RB.velocity = v;
+		*/
 	}
 }

@@ -10,6 +10,7 @@ public class ThirdPersonManager : MonoBehaviour {
 	public GameObject thirdperson;
 
 	//member
+	private const int RESOLUTION = 10000;
 	private  static ThirdPersonManager inst = null;
 	private Dictionary<int, ThirdPerson> pool = new Dictionary<int, ThirdPerson>();
 
@@ -58,8 +59,35 @@ public class ThirdPersonManager : MonoBehaviour {
 		Destroy(p.gameObject);
 	}
 
+	public void SyncCharacter(int uid) {
+		ThirdPerson player = GetCharacter(uid);
+		r_sync sync = new r_sync();
+		sync.pos = new vector3();
+		sync.rot = new rotation();
+		sync.pos.x = (int)(player.transform.position.x * RESOLUTION);
+		sync.pos.y = (int)(player.transform.position.y * RESOLUTION);
+		sync.pos.z = (int)(player.transform.position.z * RESOLUTION);
+		sync.rot.x = (int)(player.transform.rotation.x * RESOLUTION);
+		sync.rot.y = (int)(player.transform.rotation.y * RESOLUTION);
+		sync.rot.z = (int)(player.transform.rotation.z * RESOLUTION);
+		sync.rot.w = (int)(player.transform.rotation.w * RESOLUTION);
+		NetProtocol.Instance.Send(sync);
+
+	}
+
 	private void ack_sync(int err, wire obj) {
 		a_sync ack = (a_sync)obj;
-		Debug.Log("SYNC:"+ ack.pos.x);
+		int uid = ack.uid;
+		Vector3 pos = new Vector3();
+		pos.x = (float)ack.pos.x / RESOLUTION;
+		pos.y = (float)ack.pos.y / RESOLUTION;
+		pos.z = (float)ack.pos.z / RESOLUTION;
+		Quaternion rot = new Quaternion();
+		rot.x = (float)ack.rot.x / RESOLUTION;
+		rot.y = (float)ack.rot.y / RESOLUTION;
+		rot.z = (float)ack.rot.z / RESOLUTION;
+		rot.w = (float)ack.rot.w / RESOLUTION;
+		ThirdPerson p = GetCharacter(uid);
+		p.Sync(pos, rot);
 	}
 }

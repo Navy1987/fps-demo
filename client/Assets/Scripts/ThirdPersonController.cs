@@ -7,9 +7,12 @@ using client_zproto;
 public class ThirdPersonController : MonoBehaviour {
 	//component
 	public Camera playercamera;
+	public float turn_speed = 1.0f;
+	public float run_speed = 1.0f;
 	//debug
 	public Text display;
 
+	private float delta = 0;
 	private ThirdPerson player;
 	private Vector3 camera_pos;
 	private Quaternion camera_rot;
@@ -25,32 +28,44 @@ public class ThirdPersonController : MonoBehaviour {
 
 	}
 
+	void SyncPlayer() {
+		if (player == null)
+			return ;
+		float V = InputManager.GetAxis("Vertical");
+		float H = InputManager.GetAxis("Horizontal");
+		Vector3 move = new Vector3(H, 0, V);
+		display.text = "x:" + move.x + " y:" + move.y + " z:" + move.z;
+		//rotation
+		Quaternion rot = player.transform.rotation;
+		float mouseX = turn_speed * Input.GetAxis("Mouse X");
+		Quaternion cook = Quaternion.Euler(0, mouseX, 0);
+		rot = cook * rot;;
+		//position
+		Vector3 forward = new Vector3(H, 0, V) * Time.deltaTime * run_speed;
+		forward = rot * forward;
+		Vector3 pos = player.transform.position;
+		pos += forward;
+		//sync
+		player.Sync(pos, rot);
+	}
+
 	void FixedUpdate() {
 		if (player == null) {
 			int uid = Player.Instance.Uid;
 			player = ThirdPersonManager.Instance.GetCharacter(uid);
+			//player = ThirdPersonManager.Instance.CreateCharacter(uid);
 			return ;
 		}
-		float V = InputManager.GetAxis("Vertical");
-		float H = InputManager.GetAxis("Horizontal");
-		Vector3 m = new Vector3(H, 0, V);
-		display.text = "x:" + m.x + " y:" + m.y + " z:" + m.z;
-		player.Move(m, false, false);
+		SyncPlayer();
 		var pos = player.transform.position;
 		var rot = player.transform.rotation;
 		playercamera.transform.position = pos;
 		playercamera.transform.rotation = rot * camera_rot;
 		playercamera.transform.position += playercamera.transform.rotation * camera_pos;
-
-		r_sync sync = new r_sync();
-		sync.pos = new vector3();
-		sync.rot = new rotation();
-		sync.pos.x = (int)(player.transform.position.x * 10000);
-		sync.pos.y = (int)(player.transform.position.y * 10000);
-		sync.pos.z = (int)(player.transform.position.z * 10000);
-		sync.rot.x = (int)(player.transform.rotation.x * 10000);
-		sync.rot.y = (int)(player.transform.rotation.y * 10000);
-		sync.rot.z = (int)(player.transform.rotation.z * 10000);
-		sync.rot.w = (int)(player.transform.rotation.w * 10000);
+		delta += Time.deltaTime;
+		if (delta < 1f)
+			return ;
+		delta -= 1f;
+		ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
 	}
 }

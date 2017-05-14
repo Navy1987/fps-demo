@@ -330,8 +330,10 @@ public class r_sync:wirep {
 	protected override int _decode_field(ref dll.args args)  {
 		switch (args.tag) {
 		case 1:
+			pos = new vector3();
 			return pos._decode(args.buff, args.buffsz, args.sttype);
 		case 2:
+			rot = new rotation();
 			return rot._decode(args.buff, args.buffsz, args.sttype);
 		default:
 			return dll.ERROR;
@@ -363,8 +365,10 @@ public class a_sync:wirep {
 		case 1:
 			return read(ref args, out uid);
 		case 2:
+			pos = new vector3();
 			return pos._decode(args.buff, args.buffsz, args.sttype);
 		case 3:
+			rot = new rotation();
 			return rot._decode(args.buff, args.buffsz, args.sttype);
 		default:
 			return dll.ERROR;
