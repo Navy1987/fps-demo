@@ -65,7 +65,7 @@ public class ThirdPersonController : MonoBehaviour {
 		delta += Time.deltaTime;
 		if (delta < 0.1f)
 			return ;
-		delta -= 1f;
-		//ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
+		delta -= 0.1f;
+		ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
 	}
 }
