@@ -3,6 +3,7 @@ local server = require "server"
 local log = require "log"
 local db = require "db"
 local router = require "router"
+local player = require "player"
 local errno = require "protocol.errno"
 
 local challenge_key = {}
@@ -49,6 +50,8 @@ local function login(fd, req)
 	if hmac ~= req.passwd then
 		return server.error(fd, "a_login", errno.ACCOUNT_NO_PASSWORD);
 	end
+	uid = tonumber(uid)
+	player.init(fd, uid)
 	local ack = {
 		uid = tonumber(uid),
 	}

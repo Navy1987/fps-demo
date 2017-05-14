@@ -6,6 +6,7 @@ local log = require "log"
 local db = require "db"
 
 require "account"
+require "battle"
 
 core.start(function()
 	log.file("gate.log")

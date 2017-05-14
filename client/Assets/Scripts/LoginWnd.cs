@@ -88,6 +88,7 @@ public class LoginWnd : MonoBehaviour {
 			Debug.Log("login!" + ack.uid);
 			SceneManager.Instance.SwitchScene("GameScene");
 			uid = ack.uid;
+			Player.Instance.Init(uid);
 		}
 		Debug.Log("login! uid:" + uid + " err:" + err);
 	}

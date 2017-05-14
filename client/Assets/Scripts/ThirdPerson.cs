@@ -35,6 +35,8 @@ public class ThirdPerson : MonoBehaviour {
 	}
 
 	void UpdateAnimator(Vector3 move) {
+		if (animator == null)
+			return ;
 		animator.SetFloat("Forward", forward_amount, 0.1f, Time.deltaTime);
 		animator.SetFloat("Turn", turn_amount, 0.1f, Time.deltaTime);
 		animator.speed = speed_multiplier;

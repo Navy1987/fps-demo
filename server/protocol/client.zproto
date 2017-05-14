@@ -45,11 +45,12 @@ a_login 0x07 {
 
 #######
 r_join 0x101 {
-
+	.join:integer 1
 }
 
 a_join 0x102 {
-
+	.uid:integer 1
+	.join:integer 2
 }
 
 r_sync 0x103 {
@@ -58,7 +59,8 @@ r_sync 0x103 {
 }
 
 a_sync 0x104 {
-	.pos:vector3 1
-	.rot:rotation 2
+	.uid:integer 1
+	.pos:vector3 2
+	.rot:rotation 3
 }
 

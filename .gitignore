@@ -15,6 +15,8 @@ server/protocol/zproto
 *.userprefs
 *.pidb
 *.booproj
+*.log.*
+*.app
 
 
 # Unity3D Generated File On Crash Reports
