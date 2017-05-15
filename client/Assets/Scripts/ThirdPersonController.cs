@@ -41,7 +41,7 @@ public class ThirdPersonController : MonoBehaviour {
 		Quaternion cook = Quaternion.Euler(0, mouseX, 0);
 		rot = cook * rot;;
 		//position
-		Vector3 forward = new Vector3(H, 0, V) * Time.deltaTime * run_speed;
+		Vector3 forward = new Vector3(H, 0, V) * Time.deltaTime * GameConfig.Instance.run_speed * run_speed;
 		forward = rot * forward;
 		Vector3 pos = player.transform.position;
 		pos += forward;
@@ -52,8 +52,10 @@ public class ThirdPersonController : MonoBehaviour {
 	void FixedUpdate() {
 		if (player == null) {
 			int uid = Player.Instance.Uid;
-			player = ThirdPersonManager.Instance.GetCharacter(uid);
-			//player = ThirdPersonManager.Instance.CreateCharacter(uid);
+			if (GameConfig.Instance.single)
+				player = ThirdPersonManager.Instance.CreateCharacter(uid);
+			else
+				player = ThirdPersonManager.Instance.GetCharacter(uid);
 			return ;
 		}
 		SyncPlayer();
@@ -66,6 +68,7 @@ public class ThirdPersonController : MonoBehaviour {
 		if (delta < 0.1f)
 			return ;
 		delta -= 0.1f;
-		ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
+		if (!GameConfig.Instance.single)
+			ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
 	}
 }

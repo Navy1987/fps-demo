@@ -15,7 +15,7 @@ end
 
 local function close(fd)
 	local uid = player.uid(fd)
-	arena[fd] = nil
+	arena[uid] = nil
 	local req = {
 		uid =  uid,
 		join = 0
