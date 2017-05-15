@@ -6,7 +6,7 @@ public class ThirdPerson : MonoBehaviour {
 	//configuration
 	public float moving_turnspeed = 360f;
 	public float turn_speed = 180f;
-	public float speed_multiplier = 1f;
+	public float speed_multiplier = 10f;
 	//component
 	private Rigidbody RB;
 	private Animator animator;
@@ -37,27 +37,35 @@ public class ThirdPerson : MonoBehaviour {
 		if (animator == null)
 			return ;
 		float forward_amount = Vector3.Distance(pos, transform.position);
-		if (forward_amount > 0)
-			Debug.Log("Forward old" + uid + transform.position + pos + forward_amount);
-		animator.SetFloat("Forward", forward_amount, 0.1f, Time.deltaTime);
-		animator.SetFloat("Turn", 0f, 0.1f, Time.deltaTime);
-		transform.position = pos;
+		animator.SetFloat("Forward", forward_amount * speed_multiplier,
+			0.1f, Time.deltaTime);
+
+		Vector3 move = pos - transform.position;
+		move.Normalize();
+		move = transform.InverseTransformDirection(move);
+		/*
+		TODO:fix the rotation
+		//move = Vector3.ProjectOnPlane(move, m_GroundNormal);
+		float angle = Mathf.Atan2(move.x, move.z);
+		if (uid == 4)
+			Debug.Log("+++SyncPos:" + uid + ":" + pos + transform.position + ":" + forward_amount + ":" + angle);
+		animator.SetFloat("Turn", -angle, 0.1f, Time.deltaTime);
+		*/
 		transform.rotation = rot;
-		animator.speed = GameConfig.Instance.run_speed;
+		animator.speed = 1.0f;
 	}
 
-	public void Move(Vector3 move, bool crouch, bool jump) {
-		/*
-		if (move.magnitude > 1f)
-			move.Normalize();
-		move = transform.InverseTransformDirection(move);
-		turn_amount = Mathf.Atan2(move.x, move.z);
-		forward_amount = move.z;
-		float turnangle = Mathf.Lerp(turn_speed, moving_turnspeed,
-				forward_amount);
-		turnangle = turn_amount * turnangle * Time.deltaTime;
-		transform.Rotate(0, turnangle, 0);
-		UpdateAnimator(move);
-		*/
+	public void OnAnimatorMove()
+	{
+		if (Time.deltaTime > 0) {
+			Vector3 v = animator.deltaPosition /
+				Time.deltaTime;
+			v.y = RB.velocity.y;
+			RB.velocity = v;
+		}
+		if (uid == 4)
+		Debug.Log("DeltaPosition:"+ uid + ":" + animator.deltaPosition + transform.position);
 	}
+
+
 }

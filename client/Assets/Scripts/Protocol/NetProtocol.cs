@@ -90,7 +90,6 @@ public class NetProtocol {
 			socket.Read(buffer, 2);
 			length_val = BitConverter.ToInt16(buffer, 0);
 			length_val = System.Net.IPAddress.NetworkToHostOrder(length_val);
-			Debug.Log(":: Need:" + length_val);
 		}
 		if (socket.Length < length_val)
 			return ;
