@@ -13,6 +13,16 @@ public class ThirdPerson : MonoBehaviour {
 
 	//turn amount
 	private float turn_amount;
+	private Vector3 sync_src_pos;
+	private Vector3 sync_dst_pos;
+	private Quaternion sync_src_rot;
+	private Quaternion sync_dst_rot;
+	private float sync_time;
+	private float forward_amount;
+	//camera
+	private Camera playercamera = null;
+	private Vector3 camera_pos;
+	private Quaternion camera_rot;
 
 	private int uid;
 	public int Uid {
@@ -29,42 +39,54 @@ public class ThirdPerson : MonoBehaviour {
 			RigidbodyConstraints.FreezeRotationZ;
 	}
 
+	public void LookAt(Camera c) {
+		Debug.Log("LookAt");
+		playercamera = c;
+		camera_pos = playercamera.transform.position;
+		camera_rot = playercamera.transform.rotation;
+	}
+
 	void Update () {
 
+	}
+
+	void FixedUpdate() {
+		float forward_amount = Vector3.Distance(sync_dst_pos, transform.position);
+		if (forward_amount > 0.1f)
+			forward_amount = 1.0f;
+		else
+			forward_amount = 0.0f;
+		animator.SetFloat("Forward", forward_amount, 0.1f, Time.deltaTime);
 	}
 
 	public void Sync(Vector3 pos, Quaternion rot) {
 		if (animator == null)
 			return ;
-		float forward_amount = Vector3.Distance(pos, transform.position);
-		animator.SetFloat("Forward", forward_amount * speed_multiplier,
-			0.1f, Time.deltaTime);
-
-		Vector3 move = pos - transform.position;
-		move.Normalize();
-		move = transform.InverseTransformDirection(move);
-		/*
-		TODO:fix the rotation
-		//move = Vector3.ProjectOnPlane(move, m_GroundNormal);
-		float angle = Mathf.Atan2(move.x, move.z);
-		if (uid == 4)
-			Debug.Log("+++SyncPos:" + uid + ":" + pos + transform.position + ":" + forward_amount + ":" + angle);
-		animator.SetFloat("Turn", -angle, 0.1f, Time.deltaTime);
-		*/
-		transform.rotation = rot;
+		sync_dst_pos= pos;
+		sync_src_pos = transform.position;
+		sync_src_rot = transform.rotation;
+		sync_dst_rot = rot;
+		sync_time = Time.time;
+		sync_dst_pos.y = 0;
+		sync_src_pos.y = 0;
 		animator.speed = 1.0f;
 	}
 
 	public void OnAnimatorMove()
 	{
 		if (Time.deltaTime > 0) {
-			Vector3 v = animator.deltaPosition /
-				Time.deltaTime;
+			Vector3 v = (sync_dst_pos - transform.position) / 0.10f;
 			v.y = RB.velocity.y;
 			RB.velocity = v;
+			transform.rotation = Quaternion.Lerp(sync_src_rot, sync_dst_rot, (Time.time - sync_time) / 0.11f);
+			if (playercamera) {
+				var pos = transform.position;
+				var rot = transform.rotation;
+				playercamera.transform.position = pos;
+				playercamera.transform.rotation = rot * camera_rot;
+				playercamera.transform.position += playercamera.transform.rotation * camera_pos;
+			}
 		}
-		if (uid == 4)
-		Debug.Log("DeltaPosition:"+ uid + ":" + animator.deltaPosition + transform.position);
 	}
 
 
