@@ -6,7 +6,6 @@ using client_zproto;
 
 public class ThirdPersonController : MonoBehaviour {
 	//component
-	public Camera playercamera;
 	public float turn_speed = 1.0f;
 	public float run_speed = 1.0f;
 	//debug
@@ -14,13 +13,13 @@ public class ThirdPersonController : MonoBehaviour {
 
 	private float delta = 0;
 	private ThirdPerson player;
-	private Vector3 camera_pos;
-	private Quaternion camera_rot;
+	//private Vector3 camera_pos;
+	//private Quaternion camera_rot;
 
 	// Use this for initialization
 	void Start () {
-		camera_pos = playercamera.transform.position;
-		camera_rot = playercamera.transform.rotation;
+		//camera_pos = playercamera.transform.position;
+		//camera_rot = playercamera.transform.rotation;
 	}
 
 	// Update is called once per frame
@@ -39,9 +38,9 @@ public class ThirdPersonController : MonoBehaviour {
 		Quaternion rot = player.transform.rotation;
 		float mouseX = turn_speed * Input.GetAxis("Mouse X");
 		Quaternion cook = Quaternion.Euler(0, mouseX, 0);
-		rot = cook * rot;;
+		rot = cook * rot;
 		//position
-		Vector3 forward = new Vector3(H, 0, V) * Time.deltaTime * GameConfig.Instance.run_speed * run_speed;
+		Vector3 forward = new Vector3(H, 0, V) * Time.deltaTime * GameConfig.Instance.run_speed * (0.1f / Time.deltaTime);
 		forward = rot * forward;
 		Vector3 pos = player.transform.position;
 		pos += forward;
@@ -52,22 +51,18 @@ public class ThirdPersonController : MonoBehaviour {
 	void FixedUpdate() {
 		if (player == null) {
 			int uid = Player.Instance.Uid;
-			if (GameConfig.Instance.single)
+			if (GameConfig.Instance.single) {
 				player = ThirdPersonManager.Instance.CreateCharacter(uid);
-			else
+			} else {
 				player = ThirdPersonManager.Instance.GetCharacter(uid);
+			}
 			return ;
 		}
-		SyncPlayer();
-		var pos = player.transform.position;
-		var rot = player.transform.rotation;
-		playercamera.transform.position = pos;
-		playercamera.transform.rotation = rot * camera_rot;
-		playercamera.transform.position += playercamera.transform.rotation * camera_pos;
 		delta += Time.deltaTime;
 		if (delta < 0.1f)
 			return ;
 		delta -= 0.1f;
+		SyncPlayer();
 		if (!GameConfig.Instance.single)
 			ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
 	}
