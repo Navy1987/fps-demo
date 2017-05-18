@@ -37,6 +37,8 @@ public class ThirdPerson : MonoBehaviour {
 			RigidbodyConstraints.FreezeRotationX |
 			RigidbodyConstraints.FreezeRotationY |
 			RigidbodyConstraints.FreezeRotationZ;
+		sync_src_pos = transform.position;
+		sync_src_rot = transform.rotation;
 	}
 
 	public void LookAt(Camera c) {
@@ -50,13 +52,27 @@ public class ThirdPerson : MonoBehaviour {
 
 	}
 
-	void FixedUpdate() {
+	void FixAnimator() {
+		//position
 		float forward_amount = Vector3.Distance(sync_dst_pos, transform.position);
 		if (forward_amount > 0.1f)
 			forward_amount = 1.0f;
 		else
 			forward_amount = 0.0f;
 		animator.SetFloat("Forward", forward_amount, 0.1f, Time.deltaTime);
+		//rotation
+		/*
+		Vector3 face_src = transform.rotation * Vector3.forward;
+		Vector3 new_src = sync_dst_rot * Vector3.forward;
+		Vector3 direct = Vector3.Cross(face_src, new_src).normalized;
+		float sign = direct == Vector3.up ? 1 : -1;
+		Debug.Log("FixUpdate:" + uid + ":" + turn_amount + transform.rotation + sync_dst_rot);
+		animator.SetFloat("Turn", turn_amount, 0.1f, Time.deltaTime);
+		*/
+	}
+
+	void FixedUpdate() {
+		FixAnimator();
 	}
 
 	public void Sync(Vector3 pos, Quaternion rot) {
@@ -70,6 +86,9 @@ public class ThirdPerson : MonoBehaviour {
 		sync_dst_pos.y = 0;
 		sync_src_pos.y = 0;
 		animator.speed = 1.0f;
+		FixAnimator();
+		float turn_amount =  (sync_dst_rot.eulerAngles.y - transform.rotation.eulerAngles.y) * Mathf.Deg2Rad;
+		animator.SetFloat("Turn", turn_amount * 3, 0.1f, Time.deltaTime);
 	}
 
 	public void OnAnimatorMove()
@@ -78,7 +97,7 @@ public class ThirdPerson : MonoBehaviour {
 			Vector3 v = (sync_dst_pos - transform.position) / 0.10f;
 			v.y = RB.velocity.y;
 			RB.velocity = v;
-			transform.rotation = Quaternion.Lerp(sync_src_rot, sync_dst_rot, (Time.time - sync_time) / 0.11f);
+			transform.rotation = Quaternion.Lerp(sync_src_rot, sync_dst_rot, (Time.time - sync_time) / 0.1f);
 			if (playercamera) {
 				var pos = transform.position;
 				var rot = transform.rotation;
