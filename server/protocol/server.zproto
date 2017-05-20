@@ -1,0 +1,21 @@
+
+s_register 0x01 {
+	# 1 auth handler, 2 logic handler
+	.kind:integer 1
+	.handler:integer[] 2
+}
+
+s_auth 0x02 {
+	.uid:integer 1
+	.token:string 2
+}
+
+s_kick 0x03 {
+	.kink:integer 1
+	.id:integer 2
+}
+
+s_keepalive 0x04 {
+
+}
+

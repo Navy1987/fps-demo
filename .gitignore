@@ -17,6 +17,10 @@ server/protocol/zproto
 *.booproj
 *.log.*
 *.app
+*.swp
+zproto
+zproto.exe
+
 
 
 # Unity3D Generated File On Crash Reports

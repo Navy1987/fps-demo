@@ -1,9 +1,8 @@
 local crypt = require "crypt"
-local server = require "server"
 local log = require "log"
 local db = require "db"
-local router = require "router"
-local player = require "player"
+local session = require "session"
+local channel = require "channel"
 local errno = require "protocol.errno"
 
 local challenge_key = {}
@@ -20,7 +19,7 @@ local function create(fd, req)
 	local ack = {
 		uid = uid
 	}
-	server.send(fd, "a_create", ack)
+	channel.send(fd, "a_create", ack)
 	log.print("[account] create user:", req.user, "uid:", uid, "passwd", req.passwd)
 end
 
@@ -30,35 +29,35 @@ local function challenge(fd, req)
 		randomkey = key
 	}
 	challenge_key[fd] = key
-	server.hookclose(fd, challenge_close)
-	server.send(fd, "a_challenge", ack)
+	channel.hookclose(fd, challenge_close)
+	channel.send(fd, "a_challenge", ack)
 	log.print("[account] challenge fd:", fd, key)
 end
 
-local function login(fd, req)
+local function auth(fd, req)
 	local key = challenge_key[fd]
 	if not key then
-		return server.error(fd, "a_login", errno.ACCOUNT_NO_CHALLENGE)
+		return channel.error(fd, "a_login", errno.ACCOUNT_NO_CHALLENGE)
 	end
 	challenge_key[fd] = nil
-	server.hookclose(fd, nil)
+	channel.hookclose(fd, nil)
 	local passwd, uid = db.account_passwd(req.user)
 	if not passwd or not uid then
-		return server.error(fd, "a_login", errno.ACCOUNT_NO_USER)
+		return channel.error(fd, "a_login", errno.ACCOUNT_NO_USER)
 	end
 	local hmac = crypt.hmac(passwd, key)
 	if hmac ~= req.passwd then
-		return server.error(fd, "a_login", errno.ACCOUNT_NO_PASSWORD);
+		return channel.error(fd, "a_login", errno.ACCOUNT_NO_PASSWORD);
 	end
 	uid = tonumber(uid)
-	player.init(fd, uid)
 	local ack = {
-		uid = tonumber(uid),
+		uid = uid,
+		token = session.auth_token(uid)
 	}
-	server.send(fd, "a_login", ack);
+	channel.send(fd, "a_login", ack);
 end
 
-router.reg("r_create", create)
-router.reg("r_challenge", challenge)
-router.reg("r_login", login)
+channel.register("r_create", create)
+channel.register("r_challenge", challenge)
+channel.register("r_auth", auth)
 
