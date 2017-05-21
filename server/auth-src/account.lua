@@ -57,7 +57,7 @@ local function auth(fd, req)
 	channel.send(fd, "a_login", ack);
 end
 
-channel.register("r_create", create)
-channel.register("r_challenge", challenge)
-channel.register("r_auth", auth)
+channel.reg_client("r_create", create)
+channel.reg_client("r_challenge", challenge)
+channel.reg_client("r_auth", auth)
 

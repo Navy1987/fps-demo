@@ -8,7 +8,7 @@ local clientmt = {__index = client, __gc == gc}
 local NIL = {}
 
 
-local client_decode = lib.server_decode
+local client_decode = lib.inter_decode
 local client_encode = lib.server_encode
 
 ---server
@@ -24,6 +24,7 @@ local function clientcb(sc)
 		if not ok then
 			print("[vc] EVENT.close", err)
 		end
+		sc.fd = false
 	end
 
 	function EVENT.data()
@@ -32,8 +33,8 @@ local function clientcb(sc)
 			return
 		end
 		core.fork(EVENT.data)
-		local uid, cmd, data = client_decode(sc.proto, d, sz)
-		local ok, err = core.pcall(sc.data, uid, cmd, data)
+		local uid, cmd, dat = client_decode(d, sz)
+		local ok, err = core.pcall(sc.data, uid, cmd, dat)
 		if not ok then
 			print("[vc] dispatch socket", err)
 		end
@@ -78,6 +79,10 @@ local function checkconnect(self)
 		core.wait()
 		return self.fd and self.fd > 0
 	end
+end
+
+function client.checkconnect(self)
+	return checkconnect(self)
 end
 
 function client.sendmsg(self, uid, cmd, data)

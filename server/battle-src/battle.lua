@@ -46,6 +46,6 @@ local function sync(uid, req)
 end
 
 
-channel.register("r_join", join)
-channel.register("r_sync", sync)
+channel.reg_client("r_join", join)
+channel.reg_client("r_sync", sync)
 

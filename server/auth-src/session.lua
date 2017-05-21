@@ -44,6 +44,5 @@ router.register("s_auth", function(fd, cmd, msg)
 	return cmd, msg
 end)
 
-
 return M
 
