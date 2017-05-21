@@ -1,21 +1,9 @@
 local core = require "silly.core"
 local np = require "netpacket"
+local string = string
+
 local M = {}
 
-local NIL = {}
-
-function M.gc(obj)
-	if not obj.fd then
-		return
-	end
-	if obj.fd < 0 then
-		return
-	end
-	core.close(obj.fd)
-	obj.fd = false
-end
-
----------for gate.lua
 --return cmd, data
 function M.gate_decode(d, sz)
 	local str = core.tostring(d, sz)
@@ -68,6 +56,7 @@ function M.server_encode(proto, uid, cmd, dat)
 	local body = proto:encode(cmd, dat)
 	return hdr .. body
 end
+
 
 return M
 

@@ -1,5 +1,5 @@
 local core = require "silly.core"
-local channel = require "channel"
+local channel = require "virtualsocket.channel"
 
 require "battle"
 

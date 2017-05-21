@@ -2,8 +2,8 @@ local core = require "silly.core"
 local env = require "silly.env"
 local rpc = require "saux.rpc"
 local const = require "const"
-local gate = require "virtualsocket.gate"
-local transfer = require "virtualsocket.transfer"
+local msg = require "saux.msg"
+local wire = require "virtualsocket.wire"
 local serverproto = require "protocol.server"
 local clientproto = require "protocol.client"
 
@@ -13,6 +13,10 @@ local gate_inst
 local transfer_inst
 
 local TIMEOUT = 15000
+local gate_decode = wire.gate_decode
+local inter_decode = wire.inter_decode
+local inter_encode = wire.inter_encode
+
 
 --auth
 local gate_fd_uid = {}
@@ -38,7 +42,7 @@ local function forward_client(uid, _, data)
 	if not fd then
 		fd = uid
 	end
-	gate_inst:sendmsg(fd, data:sub(4 + 1))
+	gate_inst:send(fd, data:sub(4 + 1))
 end
 
 local login_cmd = assert(clientproto:querytag("r_login"))
@@ -56,7 +60,7 @@ local function do_login(gate_fd, data)
 		--TODO:notify client login fail
 		return
 	end
-	gate_inst:sendmsg(fd, clientproto:encode("a_login", const.EMPTY))
+	gate_inst:send(fd, clientproto:encode("a_login", const.EMPTY))
 end
 
 local function forward_transfer(gate_fd, cmd, data)
@@ -74,7 +78,7 @@ local function forward_transfer(gate_fd, cmd, data)
 	local transfer_fd = handler[cmd]
 	--TODO:notify server busy when transfer_fd is nil
 	assert(transfer_fd, cmd)
-	transfer_inst:sendmsg(transfer_fd, uid, data)
+	transfer_inst:send(transfer_fd, inter_encode(uid, data))
 end
 
 rpc_inst = rpc.createclient {
@@ -86,7 +90,7 @@ rpc_inst = rpc.createclient {
 	end
 }
 
-gate_inst = gate.create {
+gate_inst = msg.createserver {
 	addr = env.get("gate_port"),
 	accept = function(fd, addr)
 		print("accept", addr)
@@ -102,7 +106,8 @@ gate_inst = gate.create {
 		end
 		print("close", fd, errno)
 	end,
-	data = function(fd, cmd, data)
+	data = function(fd, d, sz)
+		local cmd, data = gate_decode(d, sz)
 		forward_transfer(fd, cmd, data)
 	end
 }
@@ -152,7 +157,7 @@ T[serverproto:querytag("s_kick")] = function(_, ud, cmd, req)
 	gate_inst:close(fd)
 end
 
-transfer_inst = transfer.create {
+transfer_inst = msg.createserver {
 	addr = env.get("gate_inter"),
 	accept = function(fd, addr)
 		print("accept", addr)
@@ -161,7 +166,8 @@ transfer_inst = transfer.create {
 		clear_handler(fd)
 		print("close", fd, errno)
 	end,
-	data = function(fd, uid, cmd, data)
+	data = function(fd, d, sz)
+		local uid, cmd, data = inter_decode(d, sz)
 		print(fd, uid, cmd)
 		local handler = T[cmd]
 		if handler then

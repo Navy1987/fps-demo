@@ -2,7 +2,7 @@ local crypt = require "crypt"
 local log = require "log"
 local db = require "db"
 local session = require "session"
-local channel = require "channel"
+local channel = require "virtualsocket.channel"
 local errno = require "protocol.errno"
 
 local challenge_key = {}

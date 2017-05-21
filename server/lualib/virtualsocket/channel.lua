@@ -1,6 +1,7 @@
 local core = require "silly.core"
 local env = require "silly.env"
-local server = require "virtualsocket.server"
+local msg = require "saux.msg"
+local wire = require "virtualsocket.wire"
 local serverproto = require "protocol.server"
 local clientproto = require "protocol.client"
 
@@ -11,24 +12,39 @@ local ERR = {
 	err = 0
 }
 
-local client_router = {}
-local server_router = {}
-
 local register_req = {
 	kink = false,
 	handler = {}
 }
 
+local KEEPALIVE = 1000
+
+local client_router = {}
+local server_router = {}
+
+local client_decode = wire.inter_decode
+local client_encode = wire.server_encode
+
 local inst
 
+local function sendclient(uid, cmd, data)
+	local str = client_encode(clientproto, uid, cmd, data)
+	return inst:send(str)
+end
+
+local function sendserver(cmd, data)
+	local str = client_encode(serverproto, 0, cmd, data)
+	return inst:send(str)
+end
+
 local function socket_register()
-	local ok = inst:sendproto(serverproto, "s_register", register_req)
+	local ok = sendserver("s_register", register_req)
 	assert(ok, "channel.start")
 	return ok
 end
-local KEEPALIVE = 1000
+
 local function keepalive_timer()
-	local ok, status = core.pcall(server.checkconnect, inst)
+	local ok, status = core.pcall(inst.connect, inst)
 	print("keepalive_timer", ok, status)
 	if ok and status then
 		return
@@ -36,8 +52,7 @@ local function keepalive_timer()
 	core.timeout(KEEPALIVE, keepalive_timer)
 end
 
-inst = server.create {
-	proto = clientproto,
+inst = msg.createclient {
 	addr = env.get("gate_inter"),
 	reconnect = socket_register,
 	accept = function(fd, addr)
@@ -47,7 +62,8 @@ inst = server.create {
 		print("close", fd, errno)
 		core.timeout(KEEPALIVE, keepalive_timer)
 	end,
-	data = function(uid, cmd, data)
+	data = function(fd, d, sz)
+		local uid, cmd, data = client_decode(d, sz)
 		local handler = client_router[cmd]
 		local proto
 		if handler then
@@ -68,7 +84,7 @@ inst = server.create {
 print("channel create:", inst)
 
 local function start(typ)
-	local ok = inst:start()
+	local ok = inst:connect()
 	if not ok then
 		return ok
 	end
@@ -105,7 +121,7 @@ function M.reg_server(name, cb)
 end
 
 function M.send(uid, typ, dat)
-	return inst:sendmsg(uid, typ, dat)
+	return sendclient(uid, typ, dat)
 end
 
 function M.error(uid, typ, err)
@@ -113,7 +129,7 @@ function M.error(uid, typ, err)
 	assert(cmd)
 	ERR.cmd = cmd
 	ERR.err = err
-	inst:sendmsg(uid, "error", ERR)
+	sendclient(uid, "error", ERR)
 end
 
 function M.hookclose(uid, cb)

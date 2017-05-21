@@ -1,5 +1,5 @@
-local channel = require "channel"
 local log = require "log"
+local channel = require "virtualsocket.channel"
 local errno = require "protocol.errno"
 
 local arena = {}
