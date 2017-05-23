@@ -32,13 +32,14 @@ local function sendclient(uid, cmd, data)
 	return inst:send(str)
 end
 
-local function sendserver(cmd, data)
-	local str = client_encode(serverproto, 0, cmd, data)
+local function sendserver(uid, cmd, data)
+	local str = client_encode(serverproto, uid, cmd, data)
 	return inst:send(str)
 end
 
 local function socket_register()
-	local ok = sendserver("s_register", register_req)
+	print("socket_register")
+	local ok = sendserver(0, "s_register", register_req)
 	assert(ok, "channel.start")
 	return ok
 end
@@ -47,6 +48,7 @@ local function keepalive_timer()
 	local ok, status = core.pcall(inst.connect, inst)
 	print("keepalive_timer", ok, status)
 	if ok and status then
+		socket_register()
 		return
 	end
 	core.timeout(KEEPALIVE, keepalive_timer)
@@ -54,7 +56,6 @@ end
 
 inst = msg.createclient {
 	addr = env.get("gate_inter"),
-	reconnect = socket_register,
 	accept = function(fd, addr)
 		print("accept", addr)
 	end,
@@ -86,8 +87,10 @@ print("channel create:", inst)
 local function start(typ)
 	local ok = inst:connect()
 	if not ok then
+		core.timeout(KEEPALIVE, keepalive_timer)
 		return ok
 	end
+	register_req.kind = typ
 	local handler = register_req.handler
 	local i = 1
 	for k, v in pairs(client_router) do
@@ -96,7 +99,6 @@ local function start(typ)
 		print("channel register:", k)
 	end
 	ok = socket_register()
-	core.timeout(KEEPALIVE, keepalive_timer)
 	return ok
 end
 
@@ -111,6 +113,7 @@ end
 function M.reg_client(name, cb)
 	local cmd = clientproto:querytag(name)
 	assert(cmd, name)
+	assert(cb, name)
 	client_router[cmd] = cb
 end
 
@@ -122,6 +125,10 @@ end
 
 function M.send(uid, typ, dat)
 	return sendclient(uid, typ, dat)
+end
+
+function M.sendserver(uid, typ, dat)
+	return sendserver(uid, typ, dat)
 end
 
 function M.error(uid, typ, err)

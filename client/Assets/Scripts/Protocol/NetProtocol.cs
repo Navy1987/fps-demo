@@ -60,6 +60,7 @@ public class NetProtocol {
 		if (socket.Status != NetSocket.CONNECTED)
 			return false;
 		int cmd = obj._tag();
+		Debug.Log("Send Cmd:" + cmd + " name:" + obj._name());
 		byte[] dat = null;
 		obj._serialize(out dat);
 		short len = (short)(4 + dat.Length);

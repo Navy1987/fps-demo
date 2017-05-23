@@ -4,7 +4,7 @@ local channel = require "virtualsocket.channel"
 require "battle"
 
 core.start(function()
-	local ok = channel.startauth()
+	local ok = channel.startlogic()
 	print("channel start", ok)
 end)
 

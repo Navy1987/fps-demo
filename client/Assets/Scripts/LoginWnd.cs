@@ -17,17 +17,17 @@ public class LoginWnd : MonoBehaviour {
 	private int uid = 0;
 
 	void Start () {
+		user_name.text = "findstr";
+		user_passwd.text = "asdfg";
 		//event
 		create_btn.onClick.AddListener(on_create);
 		login_btn.onClick.AddListener(on_login);
 		//protocol
 		a_create create = new a_create();
-		a_auth auth = new a_auth();
 		a_login login = new a_login();
 		a_challenge challenge = new a_challenge();
 		NetProtocol.Instance.Register(create, ack_create);
 		NetProtocol.Instance.Register(challenge, ack_challenge);
-		NetProtocol.Instance.Register(auth, ack_auth);
 		NetProtocol.Instance.Register(login, ack_login);
 	}
 
@@ -77,7 +77,7 @@ public class LoginWnd : MonoBehaviour {
 		string str = user_passwd.text;
 		byte[] passwd = sha1(str);
 		byte[] hash = hmac(passwd, Encoding.Default.GetString(ack.randomkey));
-		r_auth req = new r_auth();
+		r_login req = new r_login();
 		Debug.Log("challenge!" + ack.randomkey);
 		req.user = Encoding.Default.GetBytes(user_name.text);
 		req.passwd = hash;
@@ -85,22 +85,10 @@ public class LoginWnd : MonoBehaviour {
 		return ;
 	}
 
-	void ack_auth(int err, wire obj) {
-		a_auth ack = (a_auth) obj;
-		uid = 0;
-		if (err == 0) {
-			r_login req = new r_login();
-			req.uid = ack.uid;
-			req.token = ack.token;
-			NetProtocol.Instance.Send(req);
-		}
-		Debug.Log("login! uid:" + uid + " err:" + err);
-
-	}
-
 	void ack_login(int err, wire obj) {
+		a_login ack = (a_login) obj;
 		if (err == 0) {
-			Player.Instance.Init(uid);
+			Player.Instance.Init(ack.uid);
 			SceneManager.Instance.SwitchScene("GameScene");
 		}
 		Debug.Log("login! uid:" + uid + " err:" + err);

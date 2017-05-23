@@ -18,15 +18,6 @@ error 0x100 {
 	.err:integer 2
 }
 
-r_login 0x101 {
-	.uid:integer 1
-	.token:string 2
-}
-
-a_login 0x102 {
-
-}
-
 ####################
 r_create 0x103 {
 	.user:string 1
@@ -45,14 +36,13 @@ a_challenge 0x106 {
 	.randomkey:string 1
 }
 
-r_auth 0x107 {
+r_login 0x107 {
 	.user:string 1
 	.passwd:string 2
 }
 
-a_auth 0x108 {
+a_login 0x108 {
 	.uid:integer 1
-	.token:string 2
 }
 
 #######

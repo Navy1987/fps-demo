@@ -8,159 +8,109 @@ local serverproto = require "protocol.server"
 local clientproto = require "protocol.client"
 
 local M = {}
-local rpc_inst
+
+local IDX = 0
+
 local gate_inst
-local transfer_inst
+local broker_inst
 
 local TIMEOUT = 15000
+
 local gate_decode = wire.gate_decode
 local inter_decode = wire.inter_decode
 local inter_encode = wire.inter_encode
-
+local server_encode = wire.server_encode
 
 --auth
-local gate_fd_uid = {}
+local auth_stamp = {
+	stamp = false
+}
+
+-- uid bind
 local gate_fd_pend = {}
-
-
+local gate_fd_uid = {}
 local gate_uid_fd = {}
+
+--handler
+local auth_gate_fd = {}
 local auth_handler = {}
 local logic_handler = {}
 
-local function clear_handler(fd)
-	for k, v in pairs(auth_handler) do
-		auth_handler[k] = nil
-	end
-	for k, v in pairs(logic_handler) do
-		logic_handler[k] = nil
-	end
+local function send_broker(broker_fd, uid, cmd, req)
+	local dat = server_encode(serverproto, uid, cmd, req)
+	broker_inst:send(broker_fd, dat)
 end
 
-local function forward_client(uid, _, data)
-	--todo:handler auth
-	local fd = gate_uid_fd[uid]
-	if not fd then
-		fd = uid
-	end
-	gate_inst:send(fd, data:sub(4 + 1))
-end
-
-local login_cmd = assert(clientproto:querytag("r_login"))
-
-local function do_login(gate_fd, data)
-	local time_before = assert(gate_fd_pend[gate_fd])
-	local ack = rpc_inst:call("s_auth", data)
-	local time_after = gate_fd_pend[gate_fd]
-	if not (time_after and (time_after == time_before)) then
-		print("gate fd", gate_fd, "has be reassign")
-		return
-	end
-	local uid = data.uid
+local function gate_data(gate_fd, cmd, data)
+	local uid = gate_fd_uid[gate_fd]
+	local broker_fd
 	if not uid then
-		--TODO:notify client login fail
-		return
-	end
-	gate_inst:send(fd, clientproto:encode("a_login", const.EMPTY))
-end
-
-local function forward_transfer(gate_fd, cmd, data)
-	local uid = gate_uid_fd[gate_fd]
-	local handler
-	if not uid then
-		if cmd == login_cmd then
-			return do_login(gate_fd, data)
-		end
+		broker_fd = auth_handler[cmd]
+		assert(auth_gate_fd[broker_fd])
 		uid = gate_fd
-		handler = auth_handler
+		assert(broker_fd, cmd)
+		local stamp = gate_fd_pend[gate_fd]
+		if not stamp then
+			IDX = IDX + 1
+			auth_stamp.stamp = IDX
+			gate_fd_pend[gate_fd] = IDX
+			send_broker(broker_fd, gate_fd, "s_authstamp", auth_stamp)
+		end
 	else
-		handler = logic_handler
+		broker_fd = logic_handler[cmd]
+		assert(not auth_gate_fd[broker_fd])
+		assert(broker_fd, cmd)
 	end
-	local transfer_fd = handler[cmd]
-	--TODO:notify server busy when transfer_fd is nil
-	assert(transfer_fd, cmd)
-	transfer_inst:send(transfer_fd, inter_encode(uid, data))
+	--TODO:notify server busy when broker_fd is nil
+	broker_inst:send(broker_fd, inter_encode(uid, data))
 end
 
-rpc_inst = rpc.createclient {
-	addr = env.get "auth_inter",
-	proto = serverproto,
-	timeout = 5000,
-	close = function(fd, errno)
-		print("center rpc close", fd, errno)
+local function gate_clear(gate_fd)
+	local uid = gate_fd_uid[gate_fd]
+	gate_fd_uid[gate_fd] = nil
+	gate_fd_pend[gate_fd] = nil
+	if uid then
+		gate_uid_fd[uid] = nil
 	end
-}
+end
 
 gate_inst = msg.createserver {
 	addr = env.get("gate_port"),
 	accept = function(fd, addr)
-		print("accept", addr)
-		assert(not gate_fd_pend[fd], "gate fd reassign")
-		gate_fd_pend[fd] = core.current()
+		print("accept", fd, addr)
 	end,
 	close = function(fd, errno)
-		local uid = gate_fd_uid[fd]
-		gate_fd_uid[fd] = nil
-		gate_fd_pend[fd] = nil
-		if uid then
-			gate_uid_fd[uid] = nil
-		end
+		gate_clear(fd)
 		print("close", fd, errno)
 	end,
 	data = function(fd, d, sz)
 		local cmd, data = gate_decode(d, sz)
-		forward_transfer(fd, cmd, data)
+		gate_data(fd, cmd, data)
 	end
 }
 
 
 local T = {}
 
-T[serverproto:querytag("s_register")] = function(fd, uid, cmd, req)
-	local fill
-	print("register")
-	if req.kind == 1 then --auth handler
-		fill = auth_handler
+local function clear_handler(broker_fd)
+	local tbl
+	if (auth_gate_fd[broker_fd]) then
+		auth_gate_fd[broker_fd] = nil
+		tbl = auth_handler
 	else
-		fill = logic_handler
+		tbl = logic_handler
 	end
-	for _, v in pairs(req.handler) do
-		auth_handler[v] = fd
-		print("register cmd:", v)
+	for k, v in pairs(tbl) do
+		if v == broker_fd then
+			tbl[k] = nil
+		end
 	end
 end
 
-T[serverproto:querytag("s_auth")] = function(_, fd, cmd, req)
-	local uid = req.uid
-	local time = gate_fd_pend[fd]
-	if not time then
-		return
-	end
-	--TODO:process the fd reassign, use the temp uid
-	gate_fd_pend[fd] = nil
-	gate_fd_uid[fd] = req.uid
-	gate_uid_fd[req.uid] = req.fd
-end
-
-T[serverproto:querytag("s_kick")] = function(_, ud, cmd, req)
-	if req.kind == 1 then --auth kick
-		gate_fd_pend[ud] = nil
-		gate_fd_uid[ud] = nil
-		assert(ud == req.uid)
-	else
-		local uid = req.uid
-		assert(ud == uid)
-		assert(not gate_fd_pend[uid])
-		local fd = gate_uid_fd[uid]
-		gate_fd_pend[fd] = nil
-		gate_fd_uid[fd] = nil
-	end
-	gate_inst:close(fd)
-end
-
-transfer_inst = msg.createserver {
+broker_inst = msg.createserver {
 	addr = env.get("gate_inter"),
 	accept = function(fd, addr)
-		print("accept", addr)
+		print("accept", fd, addr)
 	end,
 	close = function(fd, errno)
 		clear_handler(fd)
@@ -168,24 +118,74 @@ transfer_inst = msg.createserver {
 	end,
 	data = function(fd, d, sz)
 		local uid, cmd, data = inter_decode(d, sz)
-		print(fd, uid, cmd)
 		local handler = T[cmd]
 		if handler then
 			local req = serverproto:decode(cmd, data:sub(8+1))
-			handler(fd, uid, cmd, req)
+			handler(fd, uid, req)
 			return
 		end
-		forward_client(uid, cmd, data)
+		local client_fd
+		if (auth_gate_fd[fd]) then
+			client_fd = uid
+		else
+			client_fd = gate_uid_fd[uid]
+		end
+		if not client_fd then
+			print("client_fd", uid, "disconnect")
+			return
+		end
+		gate_inst:send(client_fd, data:sub(4 + 1))
 	end
 }
+
+
+T[serverproto:querytag("s_register")] = function(broker_fd, uid, req)
+	local fill
+	print("register", broker_fd, req.kind)
+	if req.kind == 1 then --auth handler
+		fill = auth_handler
+		auth_gate_fd[broker_fd] = true
+	else
+		fill = logic_handler
+	end
+	for _, v in pairs(req.handler) do
+		fill[v] = broker_fd
+		print("register cmd:", v)
+	end
+end
+
+T[serverproto:querytag("s_authok")] = function(broker_fd, gate_fd, req)
+	local uid = req.uid
+	local acktime = req.stamp
+	local time = gate_fd_pend[gate_fd]
+	if not time then
+		print("s_authok", gate_fd, "has close")
+		return
+	end
+	if time ~= acktime then
+		print("s_authok stamp not same", time, acktime)
+		return
+	end
+	print("auth ok", gate_fd, uid)
+	gate_fd_pend[gate_fd] = nil
+	gate_fd_uid[gate_fd] = uid
+	gate_uid_fd[uid] = gate_fd
+end
+
+T[serverproto:querytag("s_kick")] = function(broker_fd, uid, req)
+	local gate_fd = gate_uid_fd[uid]
+	if not gate_fd then
+		return
+	end
+	gate_inst:close(gate_fd)
+	gate_clear(gate_fd)
+end
 
 function M.start()
 	local ok = gate_inst:start()
 	print("gate start:", ok)
-	local ok = transfer_inst:start()
-	print("transfer start:", ok)
-	local ok = rpc_inst:connect()
-	print("rpc start:", ok)
+	local ok = broker_inst:start()
+	print("broker start:", ok)
 end
 
 return M
