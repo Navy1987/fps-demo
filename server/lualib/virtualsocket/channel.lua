@@ -1,11 +1,14 @@
 local core = require "silly.core"
 local env = require "silly.env"
 local msg = require "saux.msg"
+local const = require "const"
 local wire = require "virtualsocket.wire"
 local serverproto = require "protocol.server"
 local clientproto = require "protocol.client"
 
 local M = {}
+
+local EVENT = 0
 
 local ERR = {
 	cmd = 0,
@@ -17,7 +20,10 @@ local register_req = {
 	handler = {}
 }
 
+
 local KEEPALIVE = 1000
+
+local uid_online = {}
 
 local client_router = {}
 local server_router = {}
@@ -44,11 +50,21 @@ local function socket_register()
 	return ok
 end
 
+local function subscribe_event()
+	local req = {
+		event = EVENT
+	}
+	local ok = sendserver(0, "s_subscribe", req)
+	assert(ok, "channel.subscribe")
+	return ok
+end
+
 local function keepalive_timer()
 	local ok, status = core.pcall(inst.connect, inst)
 	print("keepalive_timer", ok, status)
 	if ok and status then
 		socket_register()
+		subscribe_event()
 		return
 	end
 	core.timeout(KEEPALIVE, keepalive_timer)
@@ -110,6 +126,25 @@ function M.startlogic()
 	return start(2)
 end
 
+local event_key = "OC"
+--[[
+	'O' -- open
+	'C' -- close
+]]--
+
+function M.subscribe(event)
+	EVENT = 0
+	for i = 1, #event do
+		local n = event:byte(i)
+		if n == event_key:byte(1) then -- open
+			EVENT = EVENT | const.EVENT_OPEN
+		elseif n == event_key:byte(2) then -- close
+			EVENT = EVENT | const.EVENT_CLOSE
+		end
+	end
+	return subscribe_event()
+end
+
 function M.reg_client(name, cb)
 	local cmd = clientproto:querytag(name)
 	assert(cmd, name)
@@ -142,6 +177,20 @@ end
 function M.hookclose(uid, cb)
 	--TODO:hook close
 end
+
+
+local function s_connect(uid, _)
+	print("connect", uid)
+	uid_online[uid] = true
+end
+
+local function s_close(uid, _)
+	print("close", uid)
+	uid_online[uid] = false
+end
+
+M.reg_server("s_connect", s_connect)
+M.reg_server("s_close", s_close)
 
 return M
 

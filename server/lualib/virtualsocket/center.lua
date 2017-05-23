@@ -6,6 +6,7 @@ local msg = require "saux.msg"
 local wire = require "virtualsocket.wire"
 local serverproto = require "protocol.server"
 local clientproto = require "protocol.client"
+local string = string
 
 local M = {}
 
@@ -20,6 +21,9 @@ local gate_decode = wire.gate_decode
 local inter_decode = wire.inter_decode
 local inter_encode = wire.inter_encode
 local server_encode = wire.server_encode
+
+local OPEN = assert(serverproto:querytag("s_connect"))
+local CLOSE = assert(serverproto:querytag("s_close"))
 
 --auth
 local auth_stamp = {
@@ -36,10 +40,29 @@ local auth_gate_fd = {}
 local auth_handler = {}
 local logic_handler = {}
 
+--scrible
+local subscribe_open_set = {}
+local subscribe_close_set = {}
+
 local function send_broker(broker_fd, uid, cmd, req)
 	local dat = server_encode(serverproto, uid, cmd, req)
 	broker_inst:send(broker_fd, dat)
 end
+
+local function broker_event(set, uid, cmd)
+	for k, _ in pairs(set) do
+		broker_inst:send(k, string.pack("<I4I4", uid, cmd))
+	end
+end
+
+local function broker_open(uid)
+	return broker_event(subscribe_open_set, uid, OPEN)
+end
+
+local function broker_close(uid)
+	return broker_event(subscribe_close_set, uid, CLOSE)
+end
+
 
 local function gate_data(gate_fd, cmd, data)
 	local uid = gate_fd_uid[gate_fd]
@@ -70,6 +93,7 @@ local function gate_clear(gate_fd)
 	gate_fd_uid[gate_fd] = nil
 	gate_fd_pend[gate_fd] = nil
 	if uid then
+		broker_close(uid)
 		gate_uid_fd[uid] = nil
 	end
 end
@@ -94,6 +118,8 @@ local T = {}
 
 local function clear_handler(broker_fd)
 	local tbl
+	subscribe_open_set[broker_fd] = nil
+	subscribe_close_set[broker_fd] = nil
 	if (auth_gate_fd[broker_fd]) then
 		auth_gate_fd[broker_fd] = nil
 		tbl = auth_handler
@@ -170,6 +196,7 @@ T[serverproto:querytag("s_authok")] = function(broker_fd, gate_fd, req)
 	gate_fd_pend[gate_fd] = nil
 	gate_fd_uid[gate_fd] = uid
 	gate_uid_fd[uid] = gate_fd
+	broker_open(uid)
 end
 
 T[serverproto:querytag("s_kick")] = function(broker_fd, uid, req)
@@ -179,6 +206,20 @@ T[serverproto:querytag("s_kick")] = function(broker_fd, uid, req)
 	end
 	gate_inst:close(gate_fd)
 	gate_clear(gate_fd)
+end
+
+T[serverproto:querytag("s_subscribe")] = function(broker_fd, uid, req)
+	local event = req.event
+	local open_mask = const.EVENT_OPEN
+	local close_mask = const.EVENT_CLOSE
+	if (event & open_mask) == open_mask then
+		subscribe_open_set[broker_fd] = true
+		print("broker_fd subscribe open", broker_fd)
+	end
+	if (event & close_mask) == close_mask then
+		subscribe_close_set[broker_fd] = true
+		print("broker_fd subscribe open", broker_fd)
+	end
 end
 
 function M.start()

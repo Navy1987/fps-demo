@@ -6,5 +6,7 @@ require "battle"
 core.start(function()
 	local ok = channel.startlogic()
 	print("channel start", ok)
+	local ok = channel.subscribe("OC")
+	print("channel subscribe", ok)
 end)
 
