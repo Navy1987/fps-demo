@@ -30,3 +30,7 @@ s_close 0x07 {
 
 }
 
+s_online 0x08 {
+	.uid:integer[] 1
+}
+

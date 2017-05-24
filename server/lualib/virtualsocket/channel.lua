@@ -29,7 +29,6 @@ local gate_inst = {}
 local gate_close = {}
 
 local uid_online = {}
-local uid_hook = {}
 
 local client_router = {}
 local server_router = {}
@@ -88,9 +87,10 @@ local function keepalive_timer()
 	local scr = client_encode(serverproto, 0, "s_subscribe", subscribe_req)
 	local len = #gate_close
 	local cnt = 0
-	for k = cnt, 1, -1 do
+	print("keepalive", len)
+	for k = len, 1, -1 do
 		local v = gate_close[k]
-		local ok, status = core.pcall(msg.connect, v)
+		local ok, status = core.pcall(v.connect, v)
 		print("keepalive_timer gateid", v.gateid, ok, status)
 		if ok and status then
 			v:send(reg)
@@ -156,6 +156,14 @@ local function data_cb(gateid)
 	end
 end
 
+local function close_(gateid)
+	return function(fd, errno)
+		print("close", fd, errno)
+		gate_close[#gate_close + 1] = gate_inst[gateid]
+		core.timeout(KEEPALIVE, keepalive_timer)
+	end
+end
+
 local function create_data_cb(data)
 	local gateid = 0
 	while true do
@@ -169,11 +177,7 @@ local function create_data_cb(data)
 			accept = function(fd, addr)
 				print("accept", addr)
 			end,
-			close = function(fd, errno)
-				print("close", fd, errno)
-				gate_close[#gate_close + 1] = gate_inst[gateid]
-				core.timeout(KEEPALIVE, keepalive_timer)
-			end,
+			close = close_(gateid),
 			data = data(gateid)
 		}
 		print("create gate", gateid)
@@ -252,6 +256,14 @@ function M.sendserver(uid, typ, dat)
 	return sendserver(uid, typ, dat)
 end
 
+function M.attach(uid, gateid)
+	uid_online[uid] = gateid
+end
+
+function M.uidgate(uid)
+	return uid_online[uid]
+end
+
 function M.kick(uid)
 	return sendserver(uid, "s_kick", const.EMPTY)
 end
@@ -268,13 +280,8 @@ function M.error(uid, typ, err)
 	sendclient(uid, "error", ERR)
 end
 
-
 function M.hookclose(cb)
 	close_cb = cb
-end
-
-function M.hookuclose(uid, cb)
-	uid_hook[uid] = cb
 end
 
 function M.errorgate(gateid, uid, typ, err)
@@ -300,7 +307,6 @@ function M.kickgate(gateid, uid)
 	return M.sendservergate(gateid, uid, "s_kick", const.EMPTY)
 end
 
-
 local function s_connect(uid, _, gateid)
 	print("connect", uid)
 	uid_online[uid] = gate_inst[gateid]
@@ -308,17 +314,27 @@ end
 
 local function s_close(uid, _, gateid)
 	print("close", uid)
-	local cb = uid_hook[uid]
 	close_cb(uid, gateid)
 	uid_online[uid] = nil
-	uid_hook[uid] = nil
-	if cb then
-		cb(uid)
+end
+
+local function s_online(_, req, gateid)
+	print("online")
+	local online = {}
+	for _, v in pairs(req.uid) do
+		print("s_online", v)
+		online[v] = gateid
+		uid_online[v] = nil
 	end
+	for k, _ in pairs(uid_online) do
+		close_cb(k, gateid)
+	end
+	uid_online = online
 end
 
 M.reg_server("s_connect", s_connect)
 M.reg_server("s_close", s_close)
+M.reg_server("s_online", s_online)
 
 return M
 

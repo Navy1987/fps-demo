@@ -9,7 +9,6 @@ local errno = require "protocol.errno"
 local challenge_key = {}
 local connect_stamp = {}
 local connect_time = {}
-local online_uid = {}
 
 local auth_ok = {
 	uid = false,
@@ -24,12 +23,12 @@ local function auth_pass(fd, uid, gateid)
 	auth_ok.uid = uid
 	auth_ok.stamp = connect_stamp[fd]
 	print("auth_pass", fd, auth_ok.stamp)
-	local last_gate = online_uid[uid]
+	local last_gate = channel.uidgate(uid)
 	if last_gate then
 		print("kick user", uid, last_gate)
 		channel.kickgate(last_gate, uid)
 	end
-	online_uid[uid] = gateid
+	channel.attach(uid, gateid)
 	channel.sendservergate(gateid, fd, "s_authok", auth_ok)
 	connect_stamp[fd] = nil
 	connect_time[fd] = nil
@@ -98,10 +97,6 @@ local function login(fd, req, gateid)
 	}
 	auth_pass(fd, uid, gateid)
 	channel.sendgate(gateid, fd, "a_login", ack);
-end
-
-local function offline(uid, gateid)
-	online_uid[uid] = nil
 end
 
 channel.reg_server("s_authstamp", authstamp)

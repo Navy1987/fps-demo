@@ -64,6 +64,17 @@ local function broker_close(uid)
 	return broker_event(subscribe_close_set, uid, CLOSE)
 end
 
+local function broker_online(broker_fd)
+	local nty = {
+		uid = {}
+	}
+	local tbl = nty.uid
+	for uid, _ in pairs(gate_uid_fd) do
+		tbl[#tbl + 1] = uid
+	end
+	send_broker(broker_fd, 0, "s_online", nty)
+end
+
 
 local function gate_data(gate_fd, cmd, data)
 	local uid = gate_fd_uid[gate_fd]
@@ -215,13 +226,19 @@ T[serverproto:querytag("s_subscribe")] = function(broker_fd, uid, req)
 	local event = req.event
 	local open_mask = const.EVENT_OPEN
 	local close_mask = const.EVENT_CLOSE
+	local notify = false
 	if (event & open_mask) == open_mask then
 		subscribe_open_set[broker_fd] = true
+		notify = true
 		print("broker_fd subscribe open", broker_fd)
 	end
 	if (event & close_mask) == close_mask then
 		subscribe_close_set[broker_fd] = true
+		notify = true
 		print("broker_fd subscribe open", broker_fd)
+	end
+	if notify then
+		broker_online(broker_fd)
 	end
 end
 

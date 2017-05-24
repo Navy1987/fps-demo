@@ -7,6 +7,8 @@ require "account"
 core.start(function()
 	local ok = channel.startauth()
 	print("channel start", ok)
+	ok = channel.subscribe("C")
+	print("channel subscribe", ok)
 	ok = db.start()
 	print("db start", ok)
 end)
