@@ -16,6 +16,7 @@ local gate_inst
 local broker_inst
 
 local TIMEOUT = 15000
+local gateid = assert(env.get("gateid"), "gateid")
 
 local gate_decode = wire.gate_decode
 local inter_decode = wire.inter_decode
@@ -98,8 +99,9 @@ local function gate_clear(gate_fd)
 	end
 end
 
+
 gate_inst = msg.createserver {
-	addr = env.get("gate_port"),
+	addr = env.get("gate_port_" .. gateid),
 	accept = function(fd, addr)
 		print("accept", fd, addr)
 	end,
@@ -134,7 +136,7 @@ local function clear_handler(broker_fd)
 end
 
 broker_inst = msg.createserver {
-	addr = env.get("gate_inter"),
+	addr = env.get("gate_inter_" .. gateid),
 	accept = function(fd, addr)
 		print("accept", fd, addr)
 	end,
@@ -204,6 +206,7 @@ T[serverproto:querytag("s_kick")] = function(broker_fd, uid, req)
 	if not gate_fd then
 		return
 	end
+	print("s_kick", uid)
 	gate_inst:close(gate_fd)
 	gate_clear(gate_fd)
 end

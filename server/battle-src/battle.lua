@@ -16,7 +16,7 @@ local function close(uid)
 		uid =  uid,
 		join = 0
 	}
-	channel.hookclose(uid, nil)
+	channel.hookuclose(uid, nil)
 	broadcast("a_join", req)
 end
 
@@ -25,10 +25,10 @@ local function join(uid, req)
 	print("join", uid, req.join)
 	req.uid = uid
 	if req.join == 0 then
-		channel.hookclose(uid, nil)
+		channel.hookuclose(uid, nil)
 		arena[uid] = nil
 	else
-		channel.hookclose(uid, close)
+		channel.hookuclose(uid, close)
 		arena[uid] = true
 		for k, v in pairs(arena) do
 			req.uid = k
