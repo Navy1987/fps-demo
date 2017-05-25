@@ -78,7 +78,9 @@ public class LoginWnd : MonoBehaviour {
 		byte[] passwd = sha1(str);
 		byte[] hash = hmac(passwd, Encoding.Default.GetString(ack.randomkey));
 		r_login req = new r_login();
-		Debug.Log("challenge!" + ack.randomkey);
+		Debug.Log("challenge!" + Encoding.Default.GetString(ack.randomkey) +
+				":" + BitConverter.ToString(hash));
+		req.gateid = 1;
 		req.user = Encoding.Default.GetBytes(user_name.text);
 		req.passwd = hash;
 		NetProtocol.Instance.Send(req);
@@ -88,6 +90,7 @@ public class LoginWnd : MonoBehaviour {
 	void ack_login(int err, wire obj) {
 		a_login ack = (a_login) obj;
 		if (err == 0) {
+			Debug.Log("Login uid:" + uid + ack.session);
 			Player.Instance.Init(ack.uid);
 			SceneManager.Instance.SwitchScene("GameScene");
 		}

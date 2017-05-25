@@ -9,28 +9,31 @@ s_subscribe 0x02 {
 	.event:integer 1
 }
 
-s_authstamp 0x03 {
-	.stamp:integer 1
-}
-
-s_authok 0x04 {
-	.uid:integer 1
-	.stamp:integer 2
-}
-
-s_kick 0x05 {
+s_connect 0x03 {
 
 }
 
-s_connect 0x06 {
+s_close 0x04 {
 
 }
 
-s_close 0x07 {
-
-}
-
-s_online 0x08 {
+s_online 0x05 {
 	.uid:integer[] 1
+}
+
+rrpc_session 0x06 {
+	.uid:integer 1
+}
+
+arpc_session 0x07 {
+	.session:integer 1
+}
+
+rrpc_kick 0x08 {
+	.uid:integer 1
+}
+
+arpc_kick 0x09 {
+
 }
 

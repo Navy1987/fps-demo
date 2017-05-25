@@ -18,49 +18,60 @@ error 0x100 {
 	.err:integer 2
 }
 
+r_login 0x101 {
+	.gateid:integer 1
+	.user:string 2
+	.passwd:string 3
+}
+
+a_login 0x102 {
+	.uid:integer 1
+	.session:integer 2
+}
+
+r_login_gate 0x103 {
+	.uid:integer 1
+	.session:integer 2
+}
+
+a_login_gate 0x104 {
+
+}
+
 ####################
-r_create 0x103 {
+r_create 0x110 {
 	.user:string 1
 	.passwd:string 2
 }
 
-a_create 0x104 {
+a_create 0x111 {
 	.uid:integer 1
 }
 
-r_challenge 0x105 {
+r_challenge 0x112 {
 
 }
 
-a_challenge 0x106 {
+a_challenge 0x113 {
 	.randomkey:string 1
 }
 
-r_login 0x107 {
-	.user:string 1
-	.passwd:string 2
-}
-
-a_login 0x108 {
-	.uid:integer 1
-}
-
 #######
-r_join 0x109 {
+r_join 0x114 {
 	.join:integer 1
 }
 
-a_join 0x10a {
+a_join 0x115 {
 	.uid:integer 1
 	.join:integer 2
 }
 
-r_sync 0x10b {
+r_sync 0x116 {
 	.pos:vector3 1
 	.rot:rotation 2
 }
 
-a_sync 0x10c {
+a_sync 0x117 {
 	.uid:integer 1
 	.pos:vector3 2
 	.rot:rotation 3
