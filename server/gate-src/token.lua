@@ -14,7 +14,7 @@ local arpc_session = { session = false }
 
 local M = {}
 
-for i = 1, TIMEOUT // TIMER do
+for i = 0, TIMEOUT // TIMER do
 	expire_uid[i] = {}
 end
 
@@ -45,7 +45,7 @@ local function expire()
 		uid_token[v] = nil
 		e[k] = nil
 	end
-	core.timeout(TIMEOUT, expire)
+	core.timeout(TIMER, expire)
 end
 
 local CMD = {}
@@ -74,11 +74,19 @@ CMD[proto:querytag("rrpc_session")] = function (fd, cmd, msg)
 	return "arpc_session", arpc_session
 end
 
+function M.check(uid, session)
+	local s = uid_token[uid]
+	if s and s == session then
+		uid_token[uid] = s + 1
+		return true
+	end
+	return false
+end
 
 function M.start()
 	local ok = server:listen()
 	print("gate token start:", ok)
-	core.timeout(TIMEOUT, expire)
+	core.timeout(TIMER, expire)
 end
 
 return M

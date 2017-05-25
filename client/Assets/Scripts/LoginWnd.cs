@@ -26,9 +26,11 @@ public class LoginWnd : MonoBehaviour {
 		a_create create = new a_create();
 		a_login login = new a_login();
 		a_challenge challenge = new a_challenge();
+		a_login_gate login_gate = new a_login_gate();
 		NetProtocol.Instance.Register(create, ack_create);
 		NetProtocol.Instance.Register(challenge, ack_challenge);
 		NetProtocol.Instance.Register(login, ack_login);
+		NetProtocol.Instance.Register(login_gate, ack_login_gate);
 	}
 
 	void Update () {
@@ -97,4 +99,7 @@ public class LoginWnd : MonoBehaviour {
 		Debug.Log("login! uid:" + uid + " err:" + err);
 	}
 
+	void ack_login_gate(int err, wire obj) {
+		Debug.Log("login_gate!" + err);
+	}
 }

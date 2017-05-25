@@ -7,6 +7,14 @@ using client_zproto;
 using zprotobuf;
 
 public class NetProtocol {
+	public const int LOGIN = 0;
+	public const int GATE = 1;
+	private int link = 0;
+	private string login_addr;
+	private string gate_addr;
+	private int login_port = 0;
+	private int gate_port = 0;
+
 	static private NetProtocol inst = null;
 	public delegate void cb_t(int err, wire obj);
 	private byte[] buffer = new byte[8];
@@ -41,15 +49,40 @@ public class NetProtocol {
 		Register(error_response, error);
 	}
 
-
-	public void Connect(string addr, int port) {
-		length_val = 0;
-		socket.Connect(addr, port);
-	}
-
 	public void Close() {
+		length_val = 0;
 		socket.Close();
 		return ;
+	}
+
+	public void InitLoginAddr(string addr, int port) {
+		login_addr = addr;
+		login_port = port;
+	}
+	public void InitGateAddr(string addr, int port) {
+		gate_addr = addr;
+		gate_port = port;
+	}
+
+	public void Switch(int linktype) {
+		link = linktype;
+		Close();
+	}
+
+	public void Connect() {
+		length_val = 0;
+		string addr;
+		int port;
+		if (link == LOGIN) {
+			addr = login_addr;
+			port = login_port;
+		} else {
+			addr = gate_addr;
+			port = gate_port;
+		}
+		Close();
+		Debug.Log("Connect:" + addr + ":" + port);
+		socket.Connect(addr, port);
 	}
 
 	public bool isConnected() {

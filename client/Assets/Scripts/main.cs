@@ -5,19 +5,22 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class main : MonoBehaviour {
-	public string server_ip = "127.0.0.1";
-	public string server_port = "9009";
+	public string login_ip = "127.0.0.1";
+	public string login_port = "8001";
+	public string gate_ip = "127.0.0.1";
+	public string gate_port = "8001";
 
 	void Start () {
 		SceneManager.Instance.SwitchScene("LoginScene");
+		NetProtocol.Instance.InitLoginAddr(login_ip, Int32.Parse(login_port));
+		NetProtocol.Instance.InitGateAddr(gate_ip, Int32.Parse(gate_port));
+		NetProtocol.Instance.Switch(NetProtocol.LOGIN);
 	}
 
 	// Update is called once per frame
 	void Update () {
-		if (!NetProtocol.Instance.isConnected()) {
-			NetProtocol.Instance.Connect(server_ip,
-				Int32.Parse(server_port));
-		}
+		if (!NetProtocol.Instance.isConnected())
+			NetProtocol.Instance.Connect();
 		NetProtocol.Instance.Update();
 	}
 }

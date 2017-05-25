@@ -1,12 +1,80 @@
 local core = require "silly.core"
 local env = require "silly.env"
-local rpc = require "saux.rpc"
+local msg = require "saux.msg"
 local const = require "const"
-local serverproto = require "protocol.server"
+local token = require "token"
+local proto = require "protocol.client"
+
+local M = {}
+local CMD = {}
+
+local gate_inst
+local broker_inst
+
+local broker_handler = {}
+local online_gatefd_uid = {}
+
+local cmd_decode = wire.gate_decode
+local broker_encode = wire.inter_encode
 
 local gateid = assert(env.get("gateid"), "gateid")
 
-local M = {}
+local function sendbroker(broker_fd, gatefd, data)
+	local uid = online_gatefd_uid[gatefd]
+	if not uid then
+		gate_inst:close(gatefd)
+		return
+	end
+	local pk = broker_encode(uid, data)
+	broker_inst:send(broker_fd, pk)
+end
+
+local function sendclient(gatefd, cmd, ack)
+	if type(cmd) == "string" then
+		cmd = proto:querytag(cmd)
+	end
+	local hdr = string.pack("<I4", cmd)
+	local body = proto:encode(cmd, ack)
+	gate_inst:send(gatefd, hdr .. body)
+end
+
+gate_inst = msg.createserver {
+	addr = env.get("gate_port_" .. gateid),
+	accept = function(fd, addr)
+		print("accept", fd, addr)
+	end,
+	close = function(fd, errno)
+		gate_clear(fd)
+		print("close", fd, errno)
+	end,
+	data = function(fd, d, sz)
+		local cmd, data = gate_decode(d, sz)
+		local broker_fd = broker_handler[cmd]
+		if broker_fd then
+			sendbroker(broker_fd, fd, data)
+		else
+			local req = proto:decode(cmd, data:sub(4+1))
+			assert(CMD[cmd])(fd, req)
+		end
+	end
+}
+
+
+CMD[serverproto:querytag("r_login_gate")] = function(fd, req)
+	local uid = req.uid
+	local ok = token.check(uid, req.session)
+	if not ok then
+		print("uid:", req.uid, " login incorrect session:", req.session)
+		gate_inst:close(fd)
+		return
+	end
+	online_gatefd_uid[fd] = uid
+	sendclient(fd, "a_login_gate", const.EMPTY)
+end
+
+
+
+
 
 --[[
 local msg = require "saux.msg"
@@ -22,7 +90,6 @@ local broker_inst
 
 local TIMEOUT = 15000
 
-local gate_decode = wire.gate_decode
 local inter_decode = wire.inter_decode
 local inter_encode = wire.inter_encode
 local server_encode = wire.server_encode

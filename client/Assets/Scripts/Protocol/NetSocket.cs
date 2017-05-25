@@ -124,7 +124,8 @@ public class NetSocket {
 		lock(readstream) {
 			readstream.Clear();
 		}
-		s.Close();
+		if (s != null)
+			s.Close();
 		status = DISCONNECT;
 	}
 
