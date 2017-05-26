@@ -21,19 +21,22 @@ s_online 0x05 {
 	.uid:integer[] 1
 }
 
-rrpc_session 0x06 {
-	.uid:integer 1
+sr_session 0x06 {
+	.rpc:integer 1
+	.uid:integer 2
 }
 
-arpc_session 0x07 {
-	.session:integer 1
+sa_session 0x07 {
+	.rpc:integer 1
+	.session:integer 2
 }
 
-rrpc_kick 0x08 {
-	.uid:integer 1
+sr_kick 0x08 {
+	.rpc:integer 1
+	.uid:integer 2
 }
 
-arpc_kick 0x09 {
-
+sa_kick 0x09 {
+	.rpc:integer 1
 }
 

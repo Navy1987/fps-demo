@@ -14,13 +14,12 @@ public class main : MonoBehaviour {
 		SceneManager.Instance.SwitchScene("LoginScene");
 		NetProtocol.Instance.InitLoginAddr(login_ip, Int32.Parse(login_port));
 		NetProtocol.Instance.InitGateAddr(gate_ip, Int32.Parse(gate_port));
-		NetProtocol.Instance.Switch(NetProtocol.LOGIN);
+		NetProtocol.Instance.Switch(NetProtocol.LOGIN, null, null);
+		NetProtocol.Instance.Connect();
 	}
 
 	// Update is called once per frame
 	void Update () {
-		if (!NetProtocol.Instance.isConnected())
-			NetProtocol.Instance.Connect();
 		NetProtocol.Instance.Update();
 	}
 }

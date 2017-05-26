@@ -1,14 +1,9 @@
-local core = require "silly.core"
-local env = require "silly.env"
-local rpc = require "saux.rpc"
-local const = require "const"
+--[[
 local msg = require "saux.msg"
 local wire = require "virtualsocket.wire"
-local serverproto = require "protocol.server"
 local clientproto = require "protocol.client"
 local string = string
 
-local M = {}
 
 local IDX = 0
 
@@ -16,9 +11,7 @@ local gate_inst
 local broker_inst
 
 local TIMEOUT = 15000
-local gateid = assert(env.get("gateid"), "gateid")
 
-local gate_decode = wire.gate_decode
 local inter_decode = wire.inter_decode
 local inter_encode = wire.inter_encode
 local server_encode = wire.server_encode
@@ -147,7 +140,7 @@ local function clear_handler(broker_fd)
 end
 
 broker_inst = msg.createserver {
-	addr = env.get("gate_inter_" .. gateid),
+	addr = env.get("gate_broker_" .. gateid),
 	accept = function(fd, addr)
 		print("accept", fd, addr)
 	end,
@@ -241,14 +234,12 @@ T[serverproto:querytag("s_subscribe")] = function(broker_fd, uid, req)
 		broker_online(broker_fd)
 	end
 end
-
 function M.start()
 	local ok = gate_inst:start()
 	print("gate start:", ok)
 	local ok = broker_inst:start()
 	print("broker start:", ok)
 end
-
-return M
+]]--
 
 

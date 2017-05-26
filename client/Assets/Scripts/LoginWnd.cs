@@ -14,7 +14,9 @@ public class LoginWnd : MonoBehaviour {
 	public Button login_btn;
 	public Button create_btn;
 
+
 	private int uid = 0;
+	private int session = 0;
 
 	void Start () {
 		user_name.text = "findstr";
@@ -89,17 +91,34 @@ public class LoginWnd : MonoBehaviour {
 		return ;
 	}
 
+	void req_login_gate() {
+		Debug.Log("Req_Login_Gate");
+		r_login_gate req = new r_login_gate();
+		req.uid = uid;
+		req.session = session;
+		NetProtocol.Instance.Send(req);
+	}
+
+	void disconnect() {
+		SceneManager.Instance.SwitchScene("LoginWnd");
+	}
+
 	void ack_login(int err, wire obj) {
 		a_login ack = (a_login) obj;
 		if (err == 0) {
+			uid = ack.uid;
+			session = ack.session;
 			Debug.Log("Login uid:" + uid + ack.session);
-			Player.Instance.Init(ack.uid);
-			SceneManager.Instance.SwitchScene("GameScene");
+			NetProtocol.Instance.Switch(NetProtocol.GATE,
+					req_login_gate, disconnect);
+			NetProtocol.Instance.Connect();
 		}
 		Debug.Log("login! uid:" + uid + " err:" + err);
 	}
 
 	void ack_login_gate(int err, wire obj) {
 		Debug.Log("login_gate!" + err);
+		Player.Instance.Init(uid);
+		SceneManager.Instance.SwitchScene("GameScene");
 	}
 }

@@ -60,7 +60,6 @@ public class NetSocket {
 	private byte[] buffer = new byte[128];
 	private Stream readstream = new Stream();
 
-
 	private static void SendCB(IAsyncResult ar) {
 		NetSocket obj = (NetSocket) ar.AsyncState;
 		if (obj.sendq.Count == 0)

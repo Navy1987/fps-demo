@@ -5,7 +5,7 @@ local db = require "db"
 local const = require "const"
 local login = require "logind"
 local router = require "router"
-local gaterpc = require "gaterpc"
+local gaterpc = require "channel"
 local errno = require "protocol.errno"
 
 local challenge_key = {}
@@ -42,11 +42,13 @@ local function r_challenge(fd, req)
 end
 
 
-local rrpc_session = {
+local sr_session = {
+	rpc = false,
 	uid = false
 }
 
-local rrpc_kick = {
+local sr_kick = {
+	rpc = false,
 	uid = false
 }
 
@@ -73,8 +75,8 @@ local function auth(fd, user, passwd)
 	end
 	local g = gaterpc.gate(kick_gate)
 	assert(g, kick_gate)
-	rrpc_kick.uid = uid
-	local ack = g:call("rrpc_kick", rrpc_kick)
+	sr_kick.uid = uid
+	local ack = g:call("sr_kick", sr_kick)
 	if not ack then
 		return nil, errno.ACCOUNT_KICK_TIMEOUT
 	end
@@ -91,8 +93,8 @@ local function r_login(fd, req)
 	if not gate then
 		return login.error(fd, "a_login", errno.ACCOUNT_NO_GATEID)
 	end
-	rrpc_session.uid = uid
-	local ack = gate:call("rrpc_session", rrpc_session)
+	sr_session.uid = uid
+	local ack = gate:call("sr_session", sr_session)
 	if not ack then
 		return login.error(fd, "a_login", errno.ACCOUNT_SESSION_TIMEOUT)
 	end

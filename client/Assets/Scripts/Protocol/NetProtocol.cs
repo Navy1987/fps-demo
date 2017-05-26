@@ -7,6 +7,7 @@ using client_zproto;
 using zprotobuf;
 
 public class NetProtocol {
+	//port
 	public const int LOGIN = 0;
 	public const int GATE = 1;
 	private int link = 0;
@@ -14,23 +15,23 @@ public class NetProtocol {
 	private string gate_addr;
 	private int login_port = 0;
 	private int gate_port = 0;
-
+	//instance
 	static private NetProtocol inst = null;
+
 	public delegate void cb_t(int err, wire obj);
+	public delegate void event_cb_t();
+	//socket
+	private NetSocket socket = new NetSocket();
 	private byte[] buffer = new byte[8];
 	private short length_val = 0;
+	//protocol
 	private error error_response = new error();
-	private NetSocket socket = new NetSocket();
 	private Dictionary<int, wire> protocol_obj = new Dictionary<int, wire>();
 	private Dictionary<int, cb_t> protocol_cb = new Dictionary<int, cb_t>();
-
-	static public NetProtocol Instance {
-		get {
-			if (inst == null)
-				inst = new NetProtocol();
-			return inst;
-		}
-	}
+	//event
+	private int socket_status = NetSocket.DISCONNECT;
+	private event_cb_t event_connect = null;
+	private event_cb_t event_close = null;
 
 	private void error(int err, wire obj) {
 		error errobj = (error)obj;
@@ -52,6 +53,7 @@ public class NetProtocol {
 	public void Close() {
 		length_val = 0;
 		socket.Close();
+		socket_status = socket.Status;
 		return ;
 	}
 
@@ -64,7 +66,9 @@ public class NetProtocol {
 		gate_port = port;
 	}
 
-	public void Switch(int linktype) {
+	public void Switch(int linktype, event_cb_t open, event_cb_t close) {
+		event_connect = open;
+		event_close = close;
 		link = linktype;
 		Close();
 	}
@@ -118,6 +122,18 @@ public class NetProtocol {
 	}
 
 	public void Update() {
+		if (socket_status == NetSocket.DISCONNECT) {
+			var s = socket.Status;
+			if ((s == NetSocket.CONNECTED) && (event_connect != null))
+				event_connect();
+		} else if (socket_status == NetSocket.CONNECTED) {
+			var s = socket.Status;
+			if ((s == NetSocket.DISCONNECT) && (event_close != null)) {
+				event_close();
+				Connect();
+			}
+		}
+		socket_status = socket.Status;
 		if (socket.Length < 2)
 			return ;
 		if (length_val == 0) {
@@ -148,5 +164,14 @@ public class NetProtocol {
 		cb(0, obj);
 		return ;
 	}
+
+	static public NetProtocol Instance {
+		get {
+			if (inst == null)
+				inst = new NetProtocol();
+			return inst;
+		}
+	}
+
 
 }

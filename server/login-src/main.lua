@@ -3,7 +3,7 @@ local db = require "db"
 local proto = require "protocol.client"
 local router = require "router"
 local login = require "logind"
-local gaterpc = require "gaterpc"
+local channel = require "channel"
 
 router.start(proto)
 
@@ -14,7 +14,7 @@ core.start(function()
 	print("db start", ok)
 	ok = login:start()
 	print("logind start", ok)
-	ok = gaterpc:start()
-	print("gaterpc start", ok)
+	ok = channel:start()
+	print("channel start", ok)
 end)
 
