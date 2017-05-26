@@ -6,6 +6,7 @@ local token = require "token"
 local cproto = require "protocol.client"
 local sproto = require "protocol.server"
 local wire = require "virtualsocket.wire"
+local spack = string.pack
 
 local M = {}
 local CCMD = {}
@@ -15,6 +16,10 @@ local gate_inst
 local broker_inst
 
 local broker_handler = {}
+
+local subscribe_login = {}
+local subscribe_logout = {}
+
 local online_gatefd_uid = {}
 local online_uid_gatefd = {}
 
@@ -39,18 +44,44 @@ local function sendclient(gatefd, cmd, ack)
 	if type(cmd) == "string" then
 		cmd = cproto:querytag(cmd)
 	end
-	local hdr = string.pack("<I4", cmd)
+	local hdr = spack("<I4", cmd)
 	local body = cproto:encode(cmd, ack)
 	gate_inst:send(gatefd, hdr .. body)
 end
 
 ------------
 
+local LOGIN = sproto:querytag("s_login")
+local LOGOUT = sproto:querytag("s_logout")
+
 local function gate_clear(gatefd)
 	local uid = online_gatefd_uid[gatefd]
 	online_gatefd_uid[gatefd] = nil
 	if uid then
+		local str = spack("<I4I4", uid, LOGOUT)
 		online_uid_gatefd[uid] = nil
+		for _, v in pairs(subscribe_logout) do
+			broker_inst:send(v, str)
+		end
+	end
+end
+
+local function gate_login(gatefd, uid)
+	online_gatefd_uid[gatefd] = uid
+	online_uid_gatefd[uid] = gatefd
+	local str = spack("<I4I4", uid, LOGIN)
+	for _, v in pairs(subscribe_login) do
+		broker_inst:send(v, str)
+	end
+end
+
+local function broker_clear(brokerfd)
+	subscribe_login[brokerfd] = nil
+	subscribe_logout[brokerfd] = nil
+	for k, v in pairs(broker_handler) do
+		if v == brokerfd then
+			broker_handler[k] = nil
+		end
 	end
 end
 
@@ -58,7 +89,7 @@ local function uid_kick(uid)
 	local gatefd = online_uid_gatefd[uid]
 	if gatefd then
 		gate_inst:close(gatefd)
-		online_gatefd_uid[gatefd] = nil
+		gate_clear(gatefd)
 	end
 end
 
@@ -78,7 +109,7 @@ gate_inst = msg.createserver {
 			sendbroker(broker_fd, fd, data)
 		else
 			local req = cproto:decode(cmd, data:sub(4+1))
-			assert(CCMD[cmd])(fd, req)
+			assert(CCMD[cmd], cmd)(fd, req)
 		end
 	end
 }
@@ -91,7 +122,7 @@ CCMD[cproto:querytag("r_login_gate")] = function(fd, req)
 		gate_inst:close(fd)
 		return
 	end
-	online_gatefd_uid[fd] = uid
+	gate_login(fd, uid)
 	sendclient(fd, "a_login_gate", const.EMPTY)
 end
 
@@ -102,13 +133,22 @@ broker_inst = msg.createserver {
 		print("accept", fd, addr)
 	end,
 	close = function(fd, errno)
-		gate_clear(fd)
+		broker_clear(fd)
 		print("close", fd, errno)
 	end,
 	data = function(fd, d, sz)
 		local uid, cmd, data = broker_decode(d, sz)
-		local req = sproto:decode(cmd, data:sub(8+1))
-		assert(SCMD[cmd])(fd, req)
+		if uid == 0 then
+			local req = sproto:decode(cmd, data:sub(8+1))
+			assert(SCMD[cmd], cmd)(fd, req)
+			return
+		end
+		local gatefd = online_uid_gatefd[uid]
+		if gatefd then
+			gate_inst:send(gatefd, data:sub(4+1))
+		else
+			print("disconnect uid", uid)
+		end
 	end
 }
 
@@ -118,6 +158,22 @@ local function send_server(fd, cmd, ack)
 	broker_inst:send(fd, pk)
 end
 
+SCMD[sproto:querytag("sr_register")] = function(fd, req)
+	if (req.event & const.EVENT_OPEN) == const.EVENT_OPEN then
+		subscribe_login[#subscribe_login + 1] = fd
+	end
+	if (req.event & const.EVENT_CLOSE) == const.EVENT_CLOSE then
+		subscribe_logout[#subscribe_logout + 1] = fd
+	end
+	for _, v in pairs(req.handler) do
+		broker_handler[v] = fd
+		print(string.format("cmd:0x%x fd:%d", v, fd))
+	end
+	req.event = nil
+	req.handler = nil
+	send_server(fd, "sa_register", req)
+	print("sr_register")
+end
 
 SCMD[sproto:querytag("sr_session")] = function(fd, req)
 	local uid = req.uid
@@ -133,6 +189,16 @@ SCMD[sproto:querytag("sr_kick")] = function(fd, req)
 	token.kick(uid)
 	uid_kick(uid)
 	print("kick")
+end
+
+SCMD[sproto:querytag("sr_online")] = function(fd, req)
+	local tbl = {}
+	req.uid = tbl
+	for uid, _ in pairs(online_uid_gatefd) do
+		tbl[#tbl + 1] = uid
+	end
+	send_server(fd, "sa_online", req)
+	print("sr_online")
 end
 
 ----------------------------------------------------

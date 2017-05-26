@@ -1,24 +1,20 @@
-s_register 0x01 {
-	# 1 auth handler, 2 logic handler
-	.kind:integer 1
-	.handler:integer[] 2
-}
-
-s_subscribe 0x02 {
+sr_register 0x01 {
+	.rpc:integer 1
 	# bit 0 -> open; bit 2 --> close
-	.event:integer 1
+	.event:integer 2
+	.handler:integer[] 3
 }
 
-s_connect 0x03 {
+sa_register 0x02 {
+	.rpc:integer 1
+}
+
+s_login 0x03 {
 
 }
 
-s_close 0x04 {
+s_logout 0x04 {
 
-}
-
-s_online 0x05 {
-	.uid:integer[] 1
 }
 
 sr_session 0x06 {
@@ -39,4 +35,14 @@ sr_kick 0x08 {
 sa_kick 0x09 {
 	.rpc:integer 1
 }
+
+sr_online 0x0a {
+	.rpc:integer 1
+}
+
+sa_online 0x0b {
+	.rpc:integer 1
+	.uid:integer[] 2
+}
+
 

@@ -1,6 +1,9 @@
 local log = require "log"
-local channel = require "virtualsocket.channel"
+local channel = require "channel"
 local errno = require "protocol.errno"
+
+local M = {}
+
 
 local arena = {}
 
@@ -23,12 +26,14 @@ local function close(uid)
 end
 
 
-local function join(uid, req)
+local function join(uid, req, gateid)
 	print("join", uid, req.join)
 	req.uid = uid
 	if req.join == 0 then
 		arena[uid] = nil
+		channel.detach(uid)
 	else
+		channel.attach(uid, gateid)
 		arena[uid] = true
 		for k, v in pairs(arena) do
 			req.uid = k
@@ -45,7 +50,36 @@ local function sync(uid, req)
 	broadcast("a_sync", req)
 end
 
-channel.hookclose(close)
+local function s_login(uid, _, gate)
+	print("s_login", uid)
+end
+
+local function s_logout(uid, _)
+	print("s_logout", uid)
+	channel.detach(uid)
+end
+
+channel.reg_server("s_login", s_login)
+channel.reg_server("s_logout", s_logout)
 channel.reg_client("r_join", join)
 channel.reg_client("r_sync", sync)
 
+local function reconnect(gate)
+	local uids = channel.online(gate)
+	if not uids then
+		return
+	end
+	print("online", uids)
+	for k, v in pairs(uids) do
+		print(k, v)
+	end
+end
+
+function M.start()
+	for _, v in pairs(channel.gates()) do
+		print("gates")
+		reconnect(v)
+	end
+end
+
+return M
