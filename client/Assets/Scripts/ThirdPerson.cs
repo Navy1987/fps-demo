@@ -39,6 +39,7 @@ public class ThirdPerson : MonoBehaviour {
 			RigidbodyConstraints.FreezeRotationZ;
 		sync_src_pos = transform.position;
 		sync_src_rot = transform.rotation;
+		sync_dst_rot = transform.rotation;
 	}
 
 	public void LookAt(Camera c) {
@@ -93,7 +94,7 @@ public class ThirdPerson : MonoBehaviour {
 
 	public void OnAnimatorMove()
 	{
-		if (Time.deltaTime > 0) {
+		if (Time.deltaTime > 0.0f) {
 			Vector3 v = (sync_dst_pos - transform.position) / 0.10f;
 			v.y = RB.velocity.y;
 			RB.velocity = v;
