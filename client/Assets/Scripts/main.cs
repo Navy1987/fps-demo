@@ -10,16 +10,28 @@ public class main : MonoBehaviour {
 	public string gate_ip = "127.0.0.1";
 	public string gate_port = "8001";
 
-	void Start () {
+	void onConnect() {
+		Debug.Log("[Main] OnConnected");
+	}
+
+	void onLoginClose() {
+		Debug.Log("[Main] OnLoginClose");
+	}
+
+	void onGateClose() {
+		Debug.Log("[Main] OnGateClose");
+		NetInstance.Login.Reconnect();
 		SceneManager.Instance.SwitchScene("LoginScene");
-		NetProtocol.Instance.InitLoginAddr(login_ip, Int32.Parse(login_port));
-		NetProtocol.Instance.InitGateAddr(gate_ip, Int32.Parse(gate_port));
-		NetProtocol.Instance.Switch(NetProtocol.LOGIN, null, null);
-		NetProtocol.Instance.Connect();
+	}
+
+	void Start () {
+		NetInstance.Login.Connect(login_ip, Int32.Parse(login_port), onConnect, onLoginClose);
+		NetInstance.Gate.Connect(gate_ip, Int32.Parse(gate_port), onConnect, onGateClose);
+		SceneManager.Instance.SwitchScene("LoginScene");
 	}
 
 	// Update is called once per frame
 	void Update () {
-		NetProtocol.Instance.Update();
+		NetInstance.Update();
 	}
 }

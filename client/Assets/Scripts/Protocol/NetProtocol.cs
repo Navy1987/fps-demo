@@ -7,17 +7,7 @@ using client_zproto;
 using zprotobuf;
 
 public class NetProtocol {
-	//port
-	public const int LOGIN = 0;
-	public const int GATE = 1;
-	private int link = 0;
-	private string login_addr;
-	private string gate_addr;
-	private int login_port = 0;
-	private int gate_port = 0;
-	//instance
-	static private NetProtocol inst = null;
-
+	//delegate
 	public delegate void cb_t(int err, wire obj);
 	public delegate void event_cb_t();
 	//socket
@@ -29,9 +19,11 @@ public class NetProtocol {
 	private Dictionary<int, wire> protocol_obj = new Dictionary<int, wire>();
 	private Dictionary<int, cb_t> protocol_cb = new Dictionary<int, cb_t>();
 	//event
-	private int socket_status = NetSocket.DISCONNECT;
+	private int socket_status = NetSocket.CLOSE;
 	private event_cb_t event_connect = null;
 	private event_cb_t event_close = null;
+	private string connect_addr;
+	private int connect_port;
 
 	private void error(int err, wire obj) {
 		error errobj = (error)obj;
@@ -46,7 +38,7 @@ public class NetProtocol {
 		return ;
 	}
 
-	NetProtocol() {
+	public NetProtocol() {
 		Register(error_response, error);
 	}
 
@@ -54,48 +46,37 @@ public class NetProtocol {
 		length_val = 0;
 		socket.Close();
 		socket_status = socket.Status;
+		Debug.Log("[NetProtocol] Close");
 		return ;
 	}
 
-	public void InitLoginAddr(string addr, int port) {
-		login_addr = addr;
-		login_port = port;
-	}
-	public void InitGateAddr(string addr, int port) {
-		gate_addr = addr;
-		gate_port = port;
-	}
-
-	public void Switch(int linktype, event_cb_t open, event_cb_t close) {
-		event_connect = open;
-		event_close = close;
-		link = linktype;
-		Close();
-	}
-
-	public void Connect() {
-		length_val = 0;
-		string addr;
-		int port;
-		if (link == LOGIN) {
-			addr = login_addr;
-			port = login_port;
-		} else {
-			addr = gate_addr;
-			port = gate_port;
-		}
+	public void Connect(string addr, int port, event_cb_t open, event_cb_t close) {
 		Close();
 		Debug.Log("Connect:" + addr + ":" + port);
+		connect_addr = addr;
+		connect_port = port;
+		event_connect = open;
+		event_close = close;
 		socket.Connect(addr, port);
+		socket_status = socket.Status;
+	}
+
+	public void Reconnect() {
+		if (socket.Status == NetSocket.CONNECTED)
+			return ;
+		socket.Connect(connect_addr, connect_port);
+		socket_status = socket.Status;
 	}
 
 	public bool isConnected() {
-		return socket.Status != NetSocket.DISCONNECT;
+		return socket.Status == NetSocket.CONNECTED;
 	}
 
 	public bool Send(wire obj) {
-		if (socket.Status != NetSocket.CONNECTED)
+		if (!isConnected()) {
+			Debug.Log("[NetProtocol] Send:" + obj._name() + " disconnect" + socket.Status);
 			return false;
+		}
 		int cmd = obj._tag();
 		Debug.Log("Send Cmd:" + cmd + " name:" + obj._name());
 		byte[] dat = null;
@@ -113,7 +94,7 @@ public class NetProtocol {
 
 	public void Register(wire obj, cb_t cb) {
 		int cmd = obj._tag();
-		Debug.Log("[NetProtocol] Register:" + obj._name() + "_TAG:" + cmd);
+		Debug.Log("[NetProtocol] Register:" + obj._name() + " tag:" + cmd);
 		Debug.Assert(!protocol_obj.ContainsKey(cmd));
 		Debug.Assert(!protocol_cb.ContainsKey(cmd));
 		protocol_obj[cmd] = obj;
@@ -122,18 +103,22 @@ public class NetProtocol {
 	}
 
 	public void Update() {
-		if (socket_status == NetSocket.DISCONNECT) {
-			var s = socket.Status;
-			if ((s == NetSocket.CONNECTED) && (event_connect != null))
-				event_connect();
-		} else if (socket_status == NetSocket.CONNECTED) {
-			var s = socket.Status;
-			if ((s == NetSocket.DISCONNECT) && (event_close != null)) {
-				event_close();
-				Connect();
-			}
+		if (socket_status == NetSocket.CLOSE)
+			return ;
+		if (socket.Status == NetSocket.DISCONNECT) {
+			event_close();
+			socket_status = NetSocket.DISCONNECT;
+			Debug.Log("[NetProtocol] Reconnect addr " + connect_addr + ":" + connect_port);
+			socket.Connect(connect_addr, connect_port);
 		}
-		socket_status = socket.Status;
+		switch (socket_status) {
+		case NetSocket.DISCONNECT:
+			if (socket.Status == NetSocket.CONNECTED) {
+				socket_status = NetSocket.CONNECTED;
+				event_connect();
+			}
+			break;
+		}
 		if (socket.Length < 2)
 			return ;
 		if (length_val == 0) {
@@ -164,14 +149,14 @@ public class NetProtocol {
 		cb(0, obj);
 		return ;
 	}
-
-	static public NetProtocol Instance {
-		get {
-			if (inst == null)
-				inst = new NetProtocol();
-			return inst;
-		}
-	}
-
-
 }
+
+public class NetInstance {
+	static public NetProtocol Login = new NetProtocol();
+	static public NetProtocol Gate = new NetProtocol();
+	static public void Update() {
+		Login.Update();
+		Gate.Update();
+	}
+}
+

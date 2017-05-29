@@ -40,6 +40,8 @@ public class SceneManager : MonoBehaviour {
 			scene = Instantiate(scene) as GameObject;
 			Debug.Assert(scene != null);
 			pool[name] = scene;
+		} else {
+			scene.SetActive(true);
 		}
 		currentScene = scene;
 		return ;

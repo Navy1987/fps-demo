@@ -17,7 +17,7 @@ public class ThirdPersonManager : MonoBehaviour {
 
 	void Start() {
 		a_sync ack = new a_sync();
-		NetProtocol.Instance.Register(ack, ack_sync);
+		NetInstance.Gate.Register(ack, ack_sync);
 	}
 
 	void Update () {
@@ -80,7 +80,7 @@ public class ThirdPersonManager : MonoBehaviour {
 				sync.pos.x + "," +sync.pos.y + "," + sync.pos.z
 				);
 		*/
-		NetProtocol.Instance.Send(sync);
+		NetInstance.Gate.Send(sync);
 
 	}
 

@@ -29,10 +29,10 @@ public class LoginWnd : MonoBehaviour {
 		a_login login = new a_login();
 		a_challenge challenge = new a_challenge();
 		a_login_gate login_gate = new a_login_gate();
-		NetProtocol.Instance.Register(create, ack_create);
-		NetProtocol.Instance.Register(challenge, ack_challenge);
-		NetProtocol.Instance.Register(login, ack_login);
-		NetProtocol.Instance.Register(login_gate, ack_login_gate);
+		NetInstance.Login.Register(create, ack_create);
+		NetInstance.Login.Register(challenge, ack_challenge);
+		NetInstance.Login.Register(login, ack_login);
+		NetInstance.Gate.Register(login_gate, ack_login_gate);
 	}
 
 	void Update () {
@@ -58,7 +58,7 @@ public class LoginWnd : MonoBehaviour {
 		byte[] str = sha1(user_passwd.text);
 		req.user = Encoding.Default.GetBytes(user_name.text);
 		req.passwd = str;
-		NetProtocol.Instance.Send(req);
+		NetInstance.Login.Send(req);
 		Debug.Log("OnCreate" + user_name.text + ":" + BitConverter.ToString(str));
 		return ;
 	}
@@ -66,7 +66,7 @@ public class LoginWnd : MonoBehaviour {
 	void on_login() {
 		Debug.Log("OnLogin");
 		r_challenge req = new r_challenge();
-		NetProtocol.Instance.Send(req);
+		NetInstance.Login.Send(req);
 		return ;
 	}
 
@@ -87,7 +87,7 @@ public class LoginWnd : MonoBehaviour {
 		req.gateid = 1;
 		req.user = Encoding.Default.GetBytes(user_name.text);
 		req.passwd = hash;
-		NetProtocol.Instance.Send(req);
+		NetInstance.Login.Send(req);
 		return ;
 	}
 
@@ -96,11 +96,7 @@ public class LoginWnd : MonoBehaviour {
 		r_login_gate req = new r_login_gate();
 		req.uid = uid;
 		req.session = session;
-		NetProtocol.Instance.Send(req);
-	}
-
-	void disconnect() {
-		SceneManager.Instance.SwitchScene("LoginWnd");
+		NetInstance.Gate.Send(req);
 	}
 
 	void ack_login(int err, wire obj) {
@@ -108,10 +104,9 @@ public class LoginWnd : MonoBehaviour {
 		if (err == 0) {
 			uid = ack.uid;
 			session = ack.session;
+			NetInstance.Login.Close();
+			req_login_gate();
 			Debug.Log("Login uid:" + uid + ack.session);
-			NetProtocol.Instance.Switch(NetProtocol.GATE,
-					req_login_gate, disconnect);
-			NetProtocol.Instance.Connect();
 		}
 		Debug.Log("login! uid:" + uid + " err:" + err);
 	}

@@ -17,7 +17,7 @@ public class GameWnd : MonoBehaviour {
 
 		//socket
 		a_join ack = new a_join();
-		NetProtocol.Instance.Register(ack, ack_join);
+		NetInstance.Gate.Register(ack, ack_join);
 	}
 
 	// Update is called once per frame
@@ -29,14 +29,14 @@ public class GameWnd : MonoBehaviour {
 		Debug.Log("Enter");
 		r_join req = new r_join();
 		req.join = 1;
-		NetProtocol.Instance.Send(req);
+		NetInstance.Gate.Send(req);
 	}
 
 	void on_leave() {
 		Debug.Log("Leave");
 		r_join req = new r_join();
 		req.join = 0;
-		NetProtocol.Instance.Send(req);
+		NetInstance.Gate.Send(req);
 	}
 
 	///protocol

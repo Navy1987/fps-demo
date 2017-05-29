@@ -53,6 +53,7 @@ public class NetSocket {
 	public const int CONNECTING = 1;
 	public const int CONNECTED = 2;
 	public const int DISCONNECT = 3;
+	public const int CLOSE = 4;
 
 	private Socket s = null;
 	private int status = DISCONNECT;
@@ -111,6 +112,7 @@ public class NetSocket {
 	}
 
 	public void Connect(string addr, int port) {
+		Close();
 		s = new Socket(AddressFamily.InterNetwork,
 				SocketType.Stream, ProtocolType.Tcp);
 		status =  CONNECTING;
@@ -125,7 +127,7 @@ public class NetSocket {
 		}
 		if (s != null)
 			s.Close();
-		status = DISCONNECT;
+		status = CLOSE;
 	}
 
 	public int Status {
