@@ -60,7 +60,8 @@ local function gate_clear(gatefd)
 	if uid then
 		local str = spack("<I4I4", uid, LOGOUT)
 		online_uid_gatefd[uid] = nil
-		for _, v in pairs(subscribe_logout) do
+		for v, _ in pairs(subscribe_logout) do
+			print("subscribe logout", v)
 			broker_inst:send(v, str)
 		end
 	end
@@ -70,7 +71,7 @@ local function gate_login(gatefd, uid)
 	online_gatefd_uid[gatefd] = uid
 	online_uid_gatefd[uid] = gatefd
 	local str = spack("<I4I4", uid, LOGIN)
-	for _, v in pairs(subscribe_login) do
+	for v, _ in pairs(subscribe_login) do
 		broker_inst:send(v, str)
 	end
 end
@@ -130,11 +131,11 @@ end
 broker_inst = msg.createserver {
 	addr = env.get("gate_broker_" .. gateid),
 	accept = function(fd, addr)
-		print("accept", fd, addr)
+		print("broker accept", fd, addr)
 	end,
 	close = function(fd, errno)
+		print("broker close", fd, errno)
 		broker_clear(fd)
-		print("close", fd, errno)
 	end,
 	data = function(fd, d, sz)
 		local uid, cmd, data = broker_decode(d, sz)
@@ -160,10 +161,10 @@ end
 
 SCMD[sproto:querytag("sr_register")] = function(fd, req)
 	if (req.event & const.EVENT_OPEN) == const.EVENT_OPEN then
-		subscribe_login[#subscribe_login + 1] = fd
+		subscribe_login[fd] = true
 	end
 	if (req.event & const.EVENT_CLOSE) == const.EVENT_CLOSE then
-		subscribe_logout[#subscribe_logout + 1] = fd
+		subscribe_logout[fd] = true
 	end
 	for _, v in pairs(req.handler) do
 		broker_handler[v] = fd
@@ -181,7 +182,7 @@ SCMD[sproto:querytag("sr_session")] = function(fd, req)
 	req.ud = nil
 	req.session = tk
 	send_server(fd, "sa_session", req)
-	print("session")
+	print("loginserver fetch session")
 end
 
 SCMD[sproto:querytag("sr_kick")] = function(fd, req)
