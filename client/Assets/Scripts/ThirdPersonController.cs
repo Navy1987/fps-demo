@@ -30,16 +30,18 @@ public class ThirdPersonController : MonoBehaviour {
 	void SyncPlayer() {
 		if (player == null)
 			return ;
+		//character rotation
+		Quaternion rot = player.transform.localRotation;
+		float mouseX = turn_speed * Input.GetAxis("Mouse X");
+		float mouseY = turn_speed * Input.GetAxis("Mouse Y") * Time.deltaTime;
+		Quaternion rotX = Quaternion.Euler(0.0f, mouseX, 0.0f);
+		Quaternion rotY = Quaternion.Euler(-mouseY, 0.0f, 0.0f);
+		rot = rot * rotX * rotY;
+		//position
 		float V = InputManager.GetAxis("Vertical");
 		float H = InputManager.GetAxis("Horizontal");
 		Vector3 move = new Vector3(H, 0, V);
 		display.text = "x:" + move.x + " y:" + move.y + " z:" + move.z;
-		//rotation
-		Quaternion rot = player.transform.rotation;
-		float mouseX = turn_speed * Input.GetAxis("Mouse X");
-		Quaternion cook = Quaternion.Euler(0, mouseX, 0);
-		rot = cook * rot;
-		//position
 		Vector3 forward = new Vector3(H, 0, V) * Time.deltaTime * GameConfig.Instance.run_speed * (0.1f / Time.deltaTime);
 		forward = rot * forward;
 		Vector3 pos = player.transform.position;

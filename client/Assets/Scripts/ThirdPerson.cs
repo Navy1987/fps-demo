@@ -23,6 +23,8 @@ public class ThirdPerson : MonoBehaviour {
 	private Camera playercamera = null;
 	private Vector3 camera_pos;
 	private Quaternion camera_rot;
+	private Quaternion cameraXMin;
+	private Quaternion cameraXMax;
 
 	private int uid;
 	public int Uid {
@@ -38,15 +40,17 @@ public class ThirdPerson : MonoBehaviour {
 			RigidbodyConstraints.FreezeRotationY |
 			RigidbodyConstraints.FreezeRotationZ;
 		sync_src_pos = transform.position;
-		sync_src_rot = transform.rotation;
-		sync_dst_rot = transform.rotation;
+		sync_src_rot = transform.localRotation;
+		sync_dst_rot = transform.localRotation;
+		cameraXMin = Quaternion.Euler(15.0f * Mathf.Deg2Rad, 0.0f, 0.0f);
+		cameraXMax = Quaternion.Euler(-15.0f * Mathf.Deg2Rad, 0.0f, 0.0f);
 	}
 
 	public void LookAt(Camera c) {
 		Debug.Log("LookAt");
 		playercamera = c;
 		camera_pos = playercamera.transform.position;
-		camera_rot = playercamera.transform.rotation;
+		camera_rot = playercamera.transform.localRotation;
 	}
 
 	void Update () {
@@ -81,14 +85,15 @@ public class ThirdPerson : MonoBehaviour {
 			return ;
 		sync_dst_pos= pos;
 		sync_src_pos = transform.position;
-		sync_src_rot = transform.rotation;
+		sync_src_rot = transform.localRotation;
 		sync_dst_rot = rot;
+
 		sync_time = Time.time;
 		sync_dst_pos.y = 0;
 		sync_src_pos.y = 0;
 		animator.speed = 1.0f;
 		FixAnimator();
-		float turn_amount =  (sync_dst_rot.eulerAngles.y - transform.rotation.eulerAngles.y) * Mathf.Deg2Rad;
+		float turn_amount =  (sync_dst_rot.eulerAngles.y - transform.localRotation.eulerAngles.y) * Mathf.Deg2Rad;
 		animator.SetFloat("Turn", turn_amount * 3, 0.1f, Time.deltaTime);
 	}
 
@@ -98,16 +103,33 @@ public class ThirdPerson : MonoBehaviour {
 			Vector3 v = (sync_dst_pos - transform.position) / 0.10f;
 			v.y = RB.velocity.y;
 			RB.velocity = v;
-			transform.rotation = Quaternion.Lerp(sync_src_rot, sync_dst_rot, (Time.time - sync_time) / 0.1f);
+			Quaternion dst = Quaternion.Euler(0.0f, sync_dst_rot.eulerAngles.y, 0.0f);
+			transform.localRotation = Quaternion.Slerp(sync_src_rot, dst, (Time.time - sync_time) / 0.1f);
 			if (playercamera) {
 				var pos = transform.position;
-				var rot = transform.rotation;
+				var rot = transform.localRotation;
+				var updown = Quaternion.Euler(sync_dst_rot.eulerAngles.x, 0.0f, 0.0f);
+				camera_rot = Quaternion.Slerp(camera_rot, camera_rot * updown, (Time.time - sync_time) / 0.1f);
+				camera_rot = ClampRotationAroundXAxis(camera_rot * updown);
 				playercamera.transform.position = pos;
-				playercamera.transform.rotation = rot * camera_rot;
+				playercamera.transform.localRotation = rot * camera_rot;
 				playercamera.transform.position += playercamera.transform.rotation * camera_pos;
 			}
 		}
 	}
+
+	Quaternion ClampRotationAroundXAxis(Quaternion q)
+	{
+		q.x /= q.w;
+		q.y /= q.w;
+		q.z /= q.w;
+		q.w = 1.0f;
+		float angleX = 2.0f * Mathf.Rad2Deg * Mathf.Atan (q.x);
+		angleX = Mathf.Clamp (angleX, -16.0f, 16.0f);
+		q.x = Mathf.Tan (0.5f * Mathf.Deg2Rad * angleX);
+		return q;
+        }
+
 
 
 }
