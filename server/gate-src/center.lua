@@ -88,6 +88,7 @@ end
 
 local function uid_kick(uid)
 	local gatefd = online_uid_gatefd[uid]
+	print("uid_kick", uid, gatefd)
 	if gatefd then
 		gate_inst:close(gatefd)
 		gate_clear(gatefd)
@@ -97,11 +98,11 @@ end
 gate_inst = msg.createserver {
 	addr = env.get("gate_port_" .. gateid),
 	accept = function(fd, addr)
-		print("accept", fd, addr)
+		print("[gate] accept", fd, addr)
 	end,
 	close = function(fd, errno)
 		gate_clear(fd)
-		print("close", fd, errno)
+		print("[gate] close", fd, errno)
 	end,
 	data = function(fd, d, sz)
 		local cmd, data = cmd_decode(d, sz)
@@ -187,9 +188,10 @@ end
 
 SCMD[sproto:querytag("sr_kick")] = function(fd, req)
 	local uid = req.uid
+	print("kick", uid)
 	token.kick(uid)
 	uid_kick(uid)
-	print("kick")
+	send_server(fd, "sa_kick", req)
 end
 
 SCMD[sproto:querytag("sr_online")] = function(fd, req)

@@ -78,7 +78,7 @@ public class NetProtocol {
 			return false;
 		}
 		int cmd = obj._tag();
-		Debug.Log("Send Cmd:" + cmd + " name:" + obj._name());
+		//Debug.Log("Send Cmd:" + cmd + " name:" + obj._name());
 		byte[] dat = null;
 		obj._serialize(out dat);
 		short len = (short)(4 + dat.Length);

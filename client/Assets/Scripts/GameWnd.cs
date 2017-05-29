@@ -16,8 +16,10 @@ public class GameWnd : MonoBehaviour {
 		leave_btn.onClick.AddListener(on_leave);
 
 		//socket
-		a_join ack = new a_join();
-		NetInstance.Gate.Register(ack, ack_join);
+		a_join join = new a_join();
+		a_battleinfo battle = new a_battleinfo();
+		NetInstance.Gate.Register(join, ack_join);
+		NetInstance.Gate.Register(battle, ack_battle);
 	}
 
 	// Update is called once per frame
@@ -43,9 +45,21 @@ public class GameWnd : MonoBehaviour {
 	void ack_join(int err, wire obj) {
 		a_join ack = (a_join) obj;
 		Debug.Log("Ack_Join:" +  err + ":" + ack.uid + ":" + ack.join);
-		if (ack.join == 1)
+		if (ack.join == 1) {
 			ThirdPersonManager.Instance.CreateCharacter(ack.uid);
-		else
+			r_battleinfo req = new r_battleinfo();
+			NetInstance.Gate.Send(req);
+		} else {
 			ThirdPersonManager.Instance.DeleteCharacter(ack.uid);
+		}
+	}
+
+	void ack_battle(int err, wire obj) {
+		a_battleinfo ack = (a_battleinfo)obj;
+		for (int i = 0; i < ack.uid.Length; i++) {
+			int uid = ack.uid[i];
+			Debug.Log("[GameWnd] BattleInfo CreateCharacter:" + uid);
+			ThirdPersonManager.Instance.CreateCharacter(uid);
+		}
 	}
 }

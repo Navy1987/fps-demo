@@ -35,11 +35,6 @@ local function join(uid, req, gateid)
 	else
 		channel.attach(uid, gateid)
 		arena[uid] = true
-		for k, v in pairs(arena) do
-			req.uid = k
-			channel.send(uid, "a_join", req)
-		end
-		req.uid = uid
 	end
 	broadcast("a_join", req)
 end
@@ -48,6 +43,17 @@ local function sync(uid, req)
 	print("sync", uid, req.pos.x/100000, req.pos.y/100000, req.pos.z/100000)
 	req.uid = uid
 	broadcast("a_sync", req)
+end
+
+local function r_battleinfo(uid, req)
+	local ack = {
+		uid = {}
+	}
+	local t = ack.uid
+	for k, _ in pairs(arena) do
+		t[#t + 1] = k
+	end
+	channel.send(uid, "a_battleinfo", ack)
 end
 
 local function s_login(uid, _, gate)
@@ -59,10 +65,12 @@ local function s_logout(uid, _)
 	channel.detach(uid)
 end
 
+
 channel.reg_server("s_login", s_login)
 channel.reg_server("s_logout", s_logout)
 channel.reg_client("r_join", join)
 channel.reg_client("r_sync", sync)
+channel.reg_client("r_battleinfo", r_battleinfo)
 
 local function reconnect(gate)
 	local uids = channel.online(gate)

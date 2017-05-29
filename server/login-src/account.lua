@@ -9,7 +9,7 @@ local gaterpc = require "channel"
 local errno = require "protocol.errno"
 
 local challenge_key = {}
-local uid_online = {}
+local uid_online_gate = {}
 
 local function event_close(fd)
 	challenge_key = {}
@@ -69,7 +69,8 @@ local function auth(fd, user, passwd)
 		return nil, errno.ACCOUNT_NO_PASSWORD
 	end
 	uid = tonumber(uid)
-	local kick_gate = uid_online[uid]
+	local kick_gate = uid_online_gate[uid]
+	print("online uid", uid, "kick gate", kick_gate)
 	if not kick_gate then
 		return uid
 	end
@@ -103,6 +104,7 @@ local function r_login(fd, req)
 		uid = uid,
 		session = ack.session,
 	}
+	uid_online_gate[uid] = gateid
 	login.send(fd, "a_login", ack)
 end
 

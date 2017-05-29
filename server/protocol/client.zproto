@@ -62,16 +62,24 @@ r_join 0x114 {
 }
 
 a_join 0x115 {
-	.uid:integer 1
-	.join:integer 2
+	.join:integer 1
+	.uid:integer 2
 }
 
-r_sync 0x116 {
+r_battleinfo 0x116 {
+
+}
+
+a_battleinfo 0x117 {
+	.uid:integer[] 1
+}
+
+r_sync 0x118 {
 	.pos:vector3 1
 	.rot:rotation 2
 }
 
-a_sync 0x117 {
+a_sync 0x119 {
 	.uid:integer 1
 	.pos:vector3 2
 	.rot:rotation 3
