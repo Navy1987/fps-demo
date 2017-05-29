@@ -6,20 +6,18 @@ using client_zproto;
 
 public class ThirdPersonController : MonoBehaviour {
 	//component
-	public float turn_speed = 1.0f;
-	public float run_speed = 1.0f;
+	private LineRenderer aimLine;
+
 	//debug
 	public Text display;
+	public Camera playercamera;
 
 	private float delta = 0;
 	private ThirdPerson player;
-	//private Vector3 camera_pos;
-	//private Quaternion camera_rot;
 
 	// Use this for initialization
 	void Start () {
-		//camera_pos = playercamera.transform.position;
-		//camera_rot = playercamera.transform.rotation;
+		aimLine = GetComponent<LineRenderer>();
 	}
 
 	// Update is called once per frame
@@ -27,22 +25,25 @@ public class ThirdPersonController : MonoBehaviour {
 
 	}
 
-	void SyncPlayer() {
+	void PlayerSync() {
 		if (player == null)
 			return ;
+		float turn_X_speed = GameConfig.Instance.turn_X_speed;
+		float turn_Y_speed = GameConfig.Instance.turn_Y_speed;
+		float run_speed = GameConfig.Instance.run_speed;
 		//character rotation
 		Quaternion rot = player.transform.localRotation;
-		float mouseX = turn_speed * Input.GetAxis("Mouse X");
-		float mouseY = turn_speed * Input.GetAxis("Mouse Y") * Time.deltaTime;
-		Quaternion rotX = Quaternion.Euler(0.0f, mouseX, 0.0f);
-		Quaternion rotY = Quaternion.Euler(-mouseY, 0.0f, 0.0f);
-		rot = rot * rotX * rotY;
+		float mouseY = turn_Y_speed * InputManager.GetTurnY();
+		float mouseX = turn_X_speed * InputManager.GetTurnX()  * Time.deltaTime;
+		Quaternion rotY = Quaternion.Euler(0.0f, mouseY, 0.0f);
+		Quaternion rotX = Quaternion.Euler(-mouseX, 0.0f, 0.0f);
+		rot = rot * rotY * rotX;
 		//position
-		float V = InputManager.GetAxis("Vertical");
-		float H = InputManager.GetAxis("Horizontal");
-		Vector3 move = new Vector3(H, 0, V);
+		float moveX = InputManager.GetMoveX();
+		float moveZ = InputManager.GetMoveZ();
+		Vector3 move = new Vector3(moveX, 0, moveZ);
 		display.text = "x:" + move.x + " y:" + move.y + " z:" + move.z;
-		Vector3 forward = new Vector3(H, 0, V) * Time.deltaTime * GameConfig.Instance.run_speed * (0.1f / Time.deltaTime);
+		Vector3 forward = move * Time.deltaTime * run_speed * (0.1f / Time.deltaTime);
 		forward = rot * forward;
 		Vector3 pos = player.transform.position;
 		pos += forward;
@@ -50,22 +51,25 @@ public class ThirdPersonController : MonoBehaviour {
 		player.Sync(pos, rot);
 	}
 
+	void PlayerFire() {
+
+	}
+
 	void FixedUpdate() {
-		if (player == null) {
-			int uid = Player.Instance.Uid;
-			if (GameConfig.Instance.single) {
-				player = ThirdPersonManager.Instance.CreateCharacter(uid);
-			} else {
-				player = ThirdPersonManager.Instance.GetCharacter(uid);
-			}
+		if (player == null)
 			return ;
-		}
+		PlayerFire();
 		delta += Time.deltaTime;
 		if (delta < 0.1f)
 			return ;
 		delta -= 0.1f;
-		SyncPlayer();
+		PlayerSync();
 		if (!GameConfig.Instance.single)
 			ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
+	}
+
+	public void Attach(ThirdPerson p) {
+		player = p;
+		p.LookAt(playercamera);
 	}
 }

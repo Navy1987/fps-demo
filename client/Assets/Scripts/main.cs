@@ -8,7 +8,7 @@ public class main : MonoBehaviour {
 	public string login_ip = "127.0.0.1";
 	public string login_port = "8001";
 	public string gate_ip = "127.0.0.1";
-	public string gate_port = "8001";
+	public string gate_port = "8010";
 
 	void onConnect() {
 		Debug.Log("[Main] OnConnected");

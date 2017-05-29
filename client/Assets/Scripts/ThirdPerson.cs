@@ -33,6 +33,7 @@ public class ThirdPerson : MonoBehaviour {
 	}
 
 	void Start () {
+		Debug.Log("ThirdPerson Start");
 		RB = GetComponent<Rigidbody>();
 		animator = GetComponent<Animator>();
 		RB.constraints =

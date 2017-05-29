@@ -135,9 +135,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 409f7ea32774edd4b96c70eeb190f938, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  login_ip: 192.168.1.7
+  login_ip: 127.0.0.1
   login_port: 8001
-  gate_ip: 192.168.1.7
+  gate_ip: 127.0.0.1
   gate_port: 8010
 --- !u!4 &515975914
 Transform:

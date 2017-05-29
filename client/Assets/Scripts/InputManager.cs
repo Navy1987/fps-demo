@@ -3,7 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour {
-	public static float GetAxis(string axisName) {
-		return Input.GetAxis(axisName);
+	public static float GetMoveX() {
+		return Input.GetAxis("Horizontal");
+	}
+	public static float GetMoveZ() {
+		return Input.GetAxis("Vertical");
+	}
+	public static float GetTurnX() {
+		return Input.GetAxis("Mouse Y");
+	}
+	public static float GetTurnY() {
+		return Input.GetAxis("Mouse X");
 	}
 }

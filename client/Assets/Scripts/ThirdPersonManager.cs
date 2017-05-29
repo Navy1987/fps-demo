@@ -8,7 +8,6 @@ public class ThirdPersonManager : MonoBehaviour {
 
 	//component
 	public GameObject thirdperson;
-	public Camera playercamera;
 
 	//member
 	private const int RESOLUTION = 10000;
@@ -41,8 +40,6 @@ public class ThirdPersonManager : MonoBehaviour {
 		ThirdPerson p = obj.GetComponent<ThirdPerson>();
 		Debug.Log("CreateCharacter:"+p);
 		p.Uid = uid;
-		if (uid == Player.Instance.Uid)
-			p.LookAt(playercamera);
 		pool[uid] = p;
 		return p;
 	}
