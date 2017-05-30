@@ -4,7 +4,17 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Shootable
+  - HitHead
+  - HitBack
+  - HitLeftThigh
+  - HitRightThigh
+  - HitLeftCalf
+  - HitRightCalf
+  - HitRightArm
+  - HitLeftArm
+  - HitRightForeArm
+  - HitLeftForeArm
+  - ThirdPerson
   layers:
   - Default
   - TransparentFX
@@ -15,7 +25,7 @@ TagManager:
   - 
   - 
   - Lighting
-  - 
+  - PersonBody
   - 
   - 
   - 

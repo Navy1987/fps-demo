@@ -15,4 +15,7 @@ public class InputManager : MonoBehaviour {
 	public static float GetTurnY() {
 		return Input.GetAxis("Mouse X");
 	}
+	public static bool GetFire1() {
+		return Input.GetButtonDown("Fire1");
+	}
 }

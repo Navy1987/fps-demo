@@ -7,6 +7,7 @@ using client_zproto;
 public class ThirdPersonController : MonoBehaviour {
 	//component
 	private LineRenderer aimLine;
+	private AudioSource gunAudio;
 
 	//debug
 	public Text display;
@@ -18,6 +19,8 @@ public class ThirdPersonController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		aimLine = GetComponent<LineRenderer>();
+		gunAudio = GetComponent<AudioSource>();
+		Debug.Log("[Controller] AimLine:" + aimLine);
 	}
 
 	// Update is called once per frame
@@ -51,8 +54,41 @@ public class ThirdPersonController : MonoBehaviour {
 		player.Sync(pos, rot);
 	}
 
-	void PlayerFire() {
+	private IEnumerator ShotEffect()
+	{
+		gunAudio.Play ();
+		aimLine.enabled = true;
+		yield return new WaitForSeconds(0.7f);
+		aimLine.enabled = false;
+	}
 
+	void PlayerFire() {
+		if (!InputManager.GetFire1())
+			return;
+		RaycastHit hit;
+		Vector3 rayOrigin = playercamera.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 0.0f));
+		Debug.Log("RayOrigin:" + rayOrigin);
+		Vector3 src = player.transform.position;
+		src.y = 1.0f;
+		aimLine.SetPosition (0, src);
+		StartCoroutine (ShotEffect());
+		if (Physics.Raycast(rayOrigin, playercamera.transform.forward, out hit, GameConfig.Instance.weaponRange, 1)) {
+			aimLine.SetPosition (1, hit.point);
+			var hitObj = hit.collider.gameObject;
+			var hitTag = hitObj.tag;
+			Debug.Log("Hit Tag:" + hitObj.tag);
+			if (hitObj.tag == "Untagged") {
+				return ;
+			}
+			if (Physics.Raycast(rayOrigin, playercamera.transform.forward, out hit, GameConfig.Instance.weaponRange, 1 << 9)) {
+				var personObj = hit.collider.gameObject;
+				var person = personObj.GetComponent<ThirdPerson>();
+				var hurt = PartHurt.Instance.GetHurt(hitTag);
+				Debug.Log("Hit Part:" + hitTag + " of " + personObj.tag + "[" + person.Uid + "]" + " Hp:" + hurt);
+			}
+		} else {
+			aimLine.SetPosition (1, rayOrigin + (playercamera.transform.forward * GameConfig.Instance.weaponRange));
+		}
 	}
 
 	void FixedUpdate() {
