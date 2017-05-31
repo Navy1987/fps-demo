@@ -12,6 +12,7 @@ public class ThirdPersonController : MonoBehaviour {
 	//debug
 	public Text display;
 	public Camera playercamera;
+	public Camera uicamera;
 
 	private float delta = 0;
 	private ThirdPerson player;
@@ -20,6 +21,8 @@ public class ThirdPersonController : MonoBehaviour {
 	void Start () {
 		aimLine = GetComponent<LineRenderer>();
 		gunAudio = GetComponent<AudioSource>();
+		CameraManager.main = playercamera;
+		CameraManager.ui = uicamera;
 		Debug.Log("[Controller] AimLine:" + aimLine);
 	}
 
@@ -106,6 +109,7 @@ public class ThirdPersonController : MonoBehaviour {
 
 	public void Attach(ThirdPerson p) {
 		player = p;
-		p.LookAt(playercamera);
+		CameraManager.main = playercamera;
+		p.CameraFollow(true);
 	}
 }

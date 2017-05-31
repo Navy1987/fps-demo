@@ -1,12 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ThirdPerson : MonoBehaviour {
 	//configuration
 	public float moving_turnspeed = 360f;
 	public float turn_speed = 180f;
 	public float speed_multiplier = 10f;
+	public float player_ui_scale = 1.0f;
+	public Slider player_hp;
+	public Vector3 player_hp_offset;
 	//component
 	private Rigidbody RB;
 	private Animator animator;
@@ -20,11 +24,10 @@ public class ThirdPerson : MonoBehaviour {
 	private float sync_time;
 	private float forward_amount;
 	//camera
+	private bool camera_follow = false;
 	private Camera playercamera = null;
 	private Vector3 camera_pos;
 	private Quaternion camera_rot;
-	private Quaternion cameraXMin;
-	private Quaternion cameraXMax;
 
 	private int uid;
 	public int Uid {
@@ -43,22 +46,24 @@ public class ThirdPerson : MonoBehaviour {
 		sync_src_pos = transform.position;
 		sync_src_rot = transform.localRotation;
 		sync_dst_rot = transform.localRotation;
-		cameraXMin = Quaternion.Euler(15.0f * Mathf.Deg2Rad, 0.0f, 0.0f);
-		cameraXMax = Quaternion.Euler(-15.0f * Mathf.Deg2Rad, 0.0f, 0.0f);
+		playercamera = CameraManager.main;
 	}
 
-	public void LookAt(Camera c) {
-		Debug.Log("LookAt");
-		playercamera = c;
-		camera_pos = playercamera.transform.position;
-		camera_rot = playercamera.transform.localRotation;
+	public void CameraFollow(bool follow) {
+		camera_follow = follow;
+		if (follow) {
+			playercamera = CameraManager.main;
+			Debug.Log("CameraFollow:"+ CameraManager.main);
+			camera_pos = playercamera.transform.position;
+			camera_rot = playercamera.transform.localRotation;
+		}
 	}
 
 	void Update () {
 
 	}
 
-	void FixAnimator() {
+	void FixedAnimator() {
 		//position
 		float forward_amount = Vector3.Distance(sync_dst_pos, transform.position);
 		if (forward_amount > 0.1f)
@@ -77,8 +82,17 @@ public class ThirdPerson : MonoBehaviour {
 		*/
 	}
 
+	void FixedUI() {
+		Vector3 pos = transform.position + player_hp_offset;
+		float scale = player_ui_scale / Vector3.Distance(transform.position, playercamera.transform.position);
+		//计算出血条的缩放比例
+		player_hp.transform.position = playercamera.WorldToScreenPoint(pos);
+		player_hp.transform.localScale = Vector3.one * scale;
+	}
+
 	void FixedUpdate() {
-		FixAnimator();
+		FixedAnimator();
+		FixedUI();
 	}
 
 	public void Sync(Vector3 pos, Quaternion rot) {
@@ -93,7 +107,7 @@ public class ThirdPerson : MonoBehaviour {
 		sync_dst_pos.y = 0;
 		sync_src_pos.y = 0;
 		animator.speed = 1.0f;
-		FixAnimator();
+		FixedAnimator();
 		float turn_amount =  (sync_dst_rot.eulerAngles.y - transform.localRotation.eulerAngles.y) * Mathf.Deg2Rad;
 		animator.SetFloat("Turn", turn_amount * 3, 0.1f, Time.deltaTime);
 	}
@@ -106,7 +120,7 @@ public class ThirdPerson : MonoBehaviour {
 			RB.velocity = v;
 			Quaternion dst = Quaternion.Euler(0.0f, sync_dst_rot.eulerAngles.y, 0.0f);
 			transform.localRotation = Quaternion.Slerp(sync_src_rot, dst, (Time.time - sync_time) / 0.1f);
-			if (playercamera) {
+			if (camera_follow && playercamera != null) {
 				var pos = transform.position;
 				var rot = transform.localRotation;
 				var updown = Quaternion.Euler(sync_dst_rot.eulerAngles.x, 0.0f, 0.0f);
