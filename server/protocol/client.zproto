@@ -85,3 +85,16 @@ a_sync 0x119 {
 	.rot:rotation 3
 }
 
+r_shoot 0x11a {
+	.a:integer 1
+	.b:integer 2
+	.shoot:vector3 3
+}
+
+a_shoot 0x11b {
+	.a:integer 1
+	.b:integer 2
+	.shoot:vector3 3
+}
+
+

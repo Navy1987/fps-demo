@@ -8,6 +8,7 @@ public class ThirdPersonManager : MonoBehaviour {
 
 	//component
 	public GameObject thirdperson;
+	private LineRenderer aimLine;
 
 	//member
 	private const int RESOLUTION = 10000;
@@ -15,8 +16,13 @@ public class ThirdPersonManager : MonoBehaviour {
 	private Dictionary<int, ThirdPerson> pool = new Dictionary<int, ThirdPerson>();
 
 	void Start() {
-		a_sync ack = new a_sync();
-		NetInstance.Gate.Register(ack, ack_sync);
+		aimLine = GetComponent<LineRenderer>();
+		//net protocol
+		a_sync sync = new a_sync();
+		a_shoot shoot = new a_shoot();
+		NetInstance.Gate.Register(sync, ack_sync);
+		NetInstance.Gate.Register(shoot, ack_shoot);
+
 	}
 
 	void Update () {
@@ -58,6 +64,39 @@ public class ThirdPersonManager : MonoBehaviour {
 		pool[uid] = null;
 		Destroy(p.gameObject);
 	}
+
+	private IEnumerator ShotEffectCo()
+	{
+		aimLine.enabled = true;
+		yield return new WaitForSeconds(0.7f);
+		aimLine.enabled = false;
+	}
+
+	private void ShootEffect(int a, int b, Vector3 shoot_pos) {
+		StartCoroutine (ShotEffectCo());
+		var ap = GetCharacter(a);
+		var bp = GetCharacter(b);
+		Vector3 src = ap.transform.position;
+		Vector3 dst = shoot_pos + bp.transform.position;
+		src.y = 1.0f;
+		aimLine.SetPosition (0, src);
+		aimLine.SetPosition (1, dst);
+		Debug.Log("ShootEffect a:" + a + ":" + b + " Shoot:" + dst);
+	}
+
+	public void Shoot(int a, int b, Vector3 shoot) {
+		//ShootEffect(a, b, shoot);
+		r_shoot req = new r_shoot();
+		req.a = a;
+		req.b = b;
+		req.shoot = new vector3();
+		req.shoot.x = (int)(shoot.x * RESOLUTION);
+		req.shoot.y = (int)(shoot.y * RESOLUTION);
+		req.shoot.z = (int)(shoot.z * RESOLUTION);
+		Debug.Log("ShootSend x:" + req.shoot.x + ":" + req.shoot.y + ":" + req.shoot.z + shoot);
+		NetInstance.Gate.Send(req);
+	}
+	////////////net protocol
 
 	public void SyncCharacter(int uid) {
 		ThirdPerson player = GetCharacter(uid);
@@ -102,5 +141,12 @@ public class ThirdPersonManager : MonoBehaviour {
 			return ;
 		}
 		p.Sync(pos, rot);
+	}
+	private void ack_shoot(int err, wire obj) {
+		a_shoot ack = (a_shoot)obj;
+		var shoot = ack.shoot;
+		Vector3 point = new Vector3((float)shoot.x / RESOLUTION, (float)shoot.y / RESOLUTION, (float)shoot.z / RESOLUTION);
+		Debug.Log("ShootRecv x:" + shoot.x + ":" + shoot.y + ":" + shoot.z + point);
+		ShootEffect(ack.a, ack.b, point);
 	}
 }

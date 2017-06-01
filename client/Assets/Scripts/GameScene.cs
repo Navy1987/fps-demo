@@ -27,7 +27,7 @@ public class GameScene: MonoBehaviour {
 		//init
 		controller = GetComponent<ThirdPersonController>();
 		Debug.Log("Controller:"+controller);
-		Screen.lockCursor = true;
+		//Screen.lockCursor = true;
 		//standalone mode
 		int uid = Player.Instance.Uid;
 		if (GameConfig.Instance.single) {

@@ -5,10 +5,6 @@ using UnityEngine.UI;
 using client_zproto;
 
 public class ThirdPersonController : MonoBehaviour {
-	//component
-	private LineRenderer aimLine;
-	private AudioSource gunAudio;
-
 	//debug
 	public Text display;
 	public Camera playercamera;
@@ -19,11 +15,9 @@ public class ThirdPersonController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		aimLine = GetComponent<LineRenderer>();
-		gunAudio = GetComponent<AudioSource>();
 		CameraManager.main = playercamera;
 		CameraManager.ui = uicamera;
-		Debug.Log("[Controller] AimLine:" + aimLine);
+		Debug.Log("[Controller] AimLine");
 	}
 
 	// Update is called once per frame
@@ -57,26 +51,14 @@ public class ThirdPersonController : MonoBehaviour {
 		player.Sync(pos, rot);
 	}
 
-	private IEnumerator ShotEffect()
-	{
-		gunAudio.Play ();
-		aimLine.enabled = true;
-		yield return new WaitForSeconds(0.7f);
-		aimLine.enabled = false;
-	}
-
 	void PlayerFire() {
 		if (!InputManager.GetFire1())
 			return;
 		RaycastHit hit;
 		Vector3 rayOrigin = playercamera.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 0.0f));
 		Debug.Log("RayOrigin:" + rayOrigin);
-		Vector3 src = player.transform.position;
-		src.y = 1.0f;
-		aimLine.SetPosition (0, src);
-		StartCoroutine (ShotEffect());
 		if (Physics.Raycast(rayOrigin, playercamera.transform.forward, out hit, GameConfig.Instance.weaponRange, 1)) {
-			aimLine.SetPosition (1, hit.point);
+			var hitPoint = hit.point;
 			var hitObj = hit.collider.gameObject;
 			var hitTag = hitObj.tag;
 			Debug.Log("Hit Tag:" + hitObj.tag);
@@ -87,10 +69,10 @@ public class ThirdPersonController : MonoBehaviour {
 				var personObj = hit.collider.gameObject;
 				var person = personObj.GetComponent<ThirdPerson>();
 				var hurt = PartHurt.Instance.GetHurt(hitTag);
-				Debug.Log("Hit Part:" + hitTag + " of " + personObj.tag + "[" + person.Uid + "]" + " Hp:" + hurt);
+				Debug.Log("Hit Part:" + hitTag + " of " + personObj.tag + "[" + person.Uid + "]" + " Hp:" + hurt + " Shoot:" + hitPoint + " Delta:" + (hitPoint - personObj.transform.position));
+				hitPoint -= personObj.transform.position;
+				ThirdPersonManager.Instance.Shoot(player.Uid, person.Uid, hitPoint);
 			}
-		} else {
-			aimLine.SetPosition (1, rayOrigin + (playercamera.transform.forward * GameConfig.Instance.weaponRange));
 		}
 	}
 

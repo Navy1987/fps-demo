@@ -11,6 +11,7 @@ public class ThirdPerson : MonoBehaviour {
 	public float player_ui_scale = 1.0f;
 	public Slider player_hp;
 	public Vector3 player_hp_offset;
+	private AudioSource gunAudio;
 	//component
 	private Rigidbody RB;
 	private Animator animator;
@@ -47,6 +48,7 @@ public class ThirdPerson : MonoBehaviour {
 		sync_src_rot = transform.localRotation;
 		sync_dst_rot = transform.localRotation;
 		playercamera = CameraManager.main;
+		gunAudio = GetComponent<AudioSource>();
 	}
 
 	public void CameraFollow(bool follow) {

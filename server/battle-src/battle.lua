@@ -40,7 +40,6 @@ local function join(uid, req, gateid)
 end
 
 local function sync(uid, req)
-	print("sync", uid, req.pos.x/100000, req.pos.y/100000, req.pos.z/100000)
 	req.uid = uid
 	broadcast("a_sync", req)
 end
@@ -56,21 +55,15 @@ local function r_battleinfo(uid, req)
 	channel.send(uid, "a_battleinfo", ack)
 end
 
-local function s_login(uid, _, gate)
-	print("s_login", uid)
+local function r_shoot(uid, req)
+	print("shoot", uid)
+	broadcast("a_shoot", req)
 end
 
-local function s_logout(uid, _)
-	print("s_logout", uid)
-	channel.detach(uid)
-end
-
-
-channel.reg_server("s_login", s_login)
-channel.reg_server("s_logout", s_logout)
 channel.reg_client("r_join", join)
 channel.reg_client("r_sync", sync)
 channel.reg_client("r_battleinfo", r_battleinfo)
+channel.reg_client("r_shoot", r_shoot)
 
 local function reconnect(gate)
 	local uids = channel.online(gate)
@@ -89,5 +82,18 @@ function M.start()
 		reconnect(v)
 	end
 end
+
+local function s_login(uid, _, gate)
+	print("s_login", uid)
+end
+
+local function s_logout(uid, _)
+	print("s_logout", uid)
+	close(uid)
+	channel.detach(uid)
+end
+
+channel.reg_server("s_login", s_login)
+channel.reg_server("s_logout", s_logout)
 
 return M
