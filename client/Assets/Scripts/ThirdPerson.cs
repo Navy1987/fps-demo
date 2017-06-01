@@ -85,9 +85,14 @@ public class ThirdPerson : MonoBehaviour {
 	void FixedUI() {
 		Vector3 pos = transform.position + player_hp_offset;
 		float scale = player_ui_scale / Vector3.Distance(transform.position, playercamera.transform.position);
-		//计算出血条的缩放比例
-		player_hp.transform.position = playercamera.WorldToScreenPoint(pos);
-		player_hp.transform.localScale = Vector3.one * scale;
+		pos = playercamera.WorldToScreenPoint(pos);
+		if (pos.x > 0 && pos.y > 0 && pos.z > 0) {
+			player_hp.gameObject.SetActive(true);
+			player_hp.transform.position = pos;
+			player_hp.transform.localScale = Vector3.one * scale;
+		} else {
+			player_hp.gameObject.SetActive(false);
+		}
 	}
 
 	void FixedUpdate() {
