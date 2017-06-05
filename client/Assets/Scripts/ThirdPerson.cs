@@ -24,7 +24,6 @@ public class ThirdPerson : MonoBehaviour {
 	private GameObject lefthand;
 	private GameObject righthand;
 
-	private Vector3 sync_src_pos;
 	private Quaternion sync_src_rot;
 	/*
 	private Vector3 sync_dst_pos;
@@ -66,14 +65,13 @@ public class ThirdPerson : MonoBehaviour {
 			RigidbodyConstraints.FreezeRotationX |
 			RigidbodyConstraints.FreezeRotationY |
 			RigidbodyConstraints.FreezeRotationZ;
-		sync_src_pos = transform.position;
 		sync_src_rot = transform.localRotation;
 		shadow.pos = transform.position;
 		shadow.rot = transform.localRotation;
 		playercamera = CameraManager.main;
 		gunAudio = GetComponent<AudioSource>();
-		lefthand= Tool.FindChild(transform, "EthanLeftHandPinky1");
-		righthand = Tool.FindChild(transform, "EthanRightHandPinky1");
+		lefthand= Tool.FindChild(transform, "leftArm1_LoResHand");
+		righthand = Tool.FindChild(transform, "rightArm1_LoResHand");
 		SwitchWeapon("shotgun_01");
 	}
 
@@ -89,21 +87,18 @@ public class ThirdPerson : MonoBehaviour {
 		var dir = transform.InverseTransformDirection(delta);
 		float z = 0;
 		float x = 0;
-		if (dir.z > 0.1f)
+		if (dir.z >= 0.1f)
 			z = 0.5f;
-		else if (dir.z < -0.1f)
+		else if (dir.z <= -0.1f)
 			z = -0.5f;
 
 		if (dir.x > 0.1f)
 			x = 0.5f;
 		else if (dir.x < -0.1f)
 			x = -0.5f;
-		var angleX = shadow.rot.eulerAngles.x;
-		if (angleX > 180.0f)
-			angleX -= 360.0f;
 		animator.SetFloat("ForwardZ", z);
 		animator.SetFloat("ForwardX", x);
-		animator.SetFloat("ForwardY", angleX / 5.0f);
+		Debug.Log("FixedUpdate X Z: [" + x + "][" + z + "]" + dir + "[" + dir.z + "]");
 	}
 
 	void FixedUI() {
@@ -127,13 +122,12 @@ public class ThirdPerson : MonoBehaviour {
 	}
 
 	public void Sync(Vector3 pos, Quaternion rot) {
+		Debug.Log("Sync:" + pos);
 		shadow.pos = pos;
 		shadow.pos.y = 0;
 		shadow.rot = rot;
 		sync_time = Time.time;
 
-		sync_src_pos = transform.position;
-		sync_src_pos.y = 0;
 		sync_src_rot = transform.localRotation;
 		if (animator == null)
 			return ;
@@ -156,7 +150,9 @@ public class ThirdPerson : MonoBehaviour {
 	public void OnAnimatorMove()
 	{
 		if (Time.deltaTime > 0.0f) {
-			var pos = Vector3.Slerp(transform.position, shadow.pos, 0.1f);
+			var src = transform.position;
+			src.y = 0;
+			var pos = Vector3.Slerp(src, shadow.pos, 0.1f);
 			pos.y = transform.position.y;
 			transform.position = pos;
 			Quaternion dst = Quaternion.Euler(0.0f, shadow.rot.eulerAngles.y, 0.0f);

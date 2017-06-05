@@ -726,7 +726,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4c7b4a1ed62c1647949a73dc9d5ee93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thirdperson: {fileID: 1179295664730466, guid: e363dece6c5418748ba527bd5dbcc39b,
+  thirdperson: {fileID: 1311974530438048, guid: aa0d3c1c648ec474bb8d6aaeccb63fa3,
     type: 2}
 --- !u!114 &114504055759343684
 MonoBehaviour:

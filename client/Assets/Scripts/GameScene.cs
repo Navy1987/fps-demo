@@ -33,7 +33,7 @@ public class GameScene: MonoBehaviour {
 		if (GameConfig.Instance.single) {
 			var p = ThirdPersonManager.Instance.CreateCharacter(uid);
 			controller.Attach(p);
-			p = ThirdPersonManager.Instance.CreateCharacter(uid + 1);
+			//p = ThirdPersonManager.Instance.CreateCharacter(uid + 1);
 		}
 
 		return ;

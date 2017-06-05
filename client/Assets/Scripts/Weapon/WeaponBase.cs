@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class WeaponBase : MonoBehaviour {
-	//resource
-	public GameObject weapon;
-
 	private LineRenderer aimLine;
 	private GameObject firepoint;
 	private GameObject righthand;
@@ -20,7 +17,8 @@ public class WeaponBase : MonoBehaviour {
 	public void Equip(GameObject lefthand, GameObject righthand) {
 		aimLine= GetComponent<LineRenderer>();
 		this.righthand = righthand;
-		firepoint = weapon;
+		firepoint = gameObject;
+		transform.parent = righthand.transform;
 		Debug.Log("Equip:" + righthand);
 	}
 
@@ -40,7 +38,7 @@ public class WeaponBase : MonoBehaviour {
 	void FixedUpdate() {
 		if (righthand == null)
 			return ;
-		weapon.transform.position = righthand.transform.position;
+		//weapon.transform.position = righthand.transform.position;
 	}
 }
 

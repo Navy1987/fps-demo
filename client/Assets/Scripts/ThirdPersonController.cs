@@ -47,7 +47,6 @@ public class ThirdPersonController : MonoBehaviour {
 		Quaternion rotX = Quaternion.Euler(angleX, 0.0f, 0.0f);
 		rot = rot * rotX;
 		rot = Tool.ClampRotationAroundXAxis(rot);
-		Debug.Log("Input:" + rot.eulerAngles.x);
 		player.Sync(pos, rot);
 	}
 
