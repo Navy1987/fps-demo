@@ -18,4 +18,10 @@ public class InputManager : MonoBehaviour {
 	public static bool GetFire1() {
 		return Input.GetButtonDown("Fire1");
 	}
+	public static bool GetSwap() {
+		return Input.GetButtonDown("Fire2");
+	}
+	public static bool GetJump() {
+		return Input.GetKeyDown("space");
+	}
 }

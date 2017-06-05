@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public class ShadowTransform {
+	public Vector3 pos;
+	public Quaternion rot;
+};
+
 public class ThirdPerson : MonoBehaviour {
 	//configuration
 	public float moving_turnspeed = 360f;
@@ -15,25 +20,42 @@ public class ThirdPerson : MonoBehaviour {
 	//component
 	private Rigidbody RB;
 	private Animator animator;
+	private WeaponBase weapon = null;
+	private GameObject lefthand;
+	private GameObject righthand;
 
-	//turn amount
-	private float turn_amount;
 	private Vector3 sync_src_pos;
-	private Vector3 sync_dst_pos;
 	private Quaternion sync_src_rot;
+	/*
+	private Vector3 sync_dst_pos;
 	private Quaternion sync_dst_rot;
-	private float sync_time;
-	private float forward_amount;
-	//camera
-	private bool camera_follow = false;
-	private Camera playercamera = null;
-	private Vector3 camera_pos;
-	private Quaternion camera_rot;
-
+	*/
 	private int uid;
+	private ShadowTransform shadow = new ShadowTransform();
+	private float sync_time;
+
+	//camera
+	Camera playercamera;
+
+
 	public int Uid {
 		get { return uid; }
 		set { uid = value; }
+	}
+
+	public ShadowTransform Shadow {
+		get { return shadow; }
+	}
+
+	void SwitchWeapon(string name) {
+		if (weapon != null)
+			weapon.Unload();
+		var inst = Resources.Load("Prefabs/" + name, typeof(GameObject)) as GameObject;
+		inst = Instantiate(inst) as GameObject;
+		Debug.Assert(inst != null);
+		weapon = inst.GetComponent<WeaponBase>();
+		weapon.Equip(lefthand, righthand);
+		Debug.Log("SwitWeapon");
 	}
 
 	void Start () {
@@ -46,19 +68,13 @@ public class ThirdPerson : MonoBehaviour {
 			RigidbodyConstraints.FreezeRotationZ;
 		sync_src_pos = transform.position;
 		sync_src_rot = transform.localRotation;
-		sync_dst_rot = transform.localRotation;
+		shadow.pos = transform.position;
+		shadow.rot = transform.localRotation;
 		playercamera = CameraManager.main;
 		gunAudio = GetComponent<AudioSource>();
-	}
-
-	public void CameraFollow(bool follow) {
-		camera_follow = follow;
-		if (follow) {
-			playercamera = CameraManager.main;
-			Debug.Log("CameraFollow:"+ CameraManager.main);
-			camera_pos = playercamera.transform.position;
-			camera_rot = playercamera.transform.localRotation;
-		}
+		lefthand= Tool.FindChild(transform, "EthanLeftHandPinky1");
+		righthand = Tool.FindChild(transform, "EthanRightHandPinky1");
+		SwitchWeapon("shotgun_01");
 	}
 
 	void Update () {
@@ -67,24 +83,32 @@ public class ThirdPerson : MonoBehaviour {
 
 	void FixedAnimator() {
 		//position
-		float forward_amount = Vector3.Distance(sync_dst_pos, transform.position);
-		if (forward_amount > 0.1f)
-			forward_amount = 1.0f;
-		else
-			forward_amount = 0.0f;
-		animator.SetFloat("Forward", forward_amount, 0.1f, Time.deltaTime);
-		//rotation
-		/*
-		Vector3 face_src = transform.rotation * Vector3.forward;
-		Vector3 new_src = sync_dst_rot * Vector3.forward;
-		Vector3 direct = Vector3.Cross(face_src, new_src).normalized;
-		float sign = direct == Vector3.up ? 1 : -1;
-		Debug.Log("FixUpdate:" + uid + ":" + turn_amount + transform.rotation + sync_dst_rot);
-		animator.SetFloat("Turn", turn_amount, 0.1f, Time.deltaTime);
-		*/
+		var delta = transform.position;
+		delta.y = 0;
+		delta = shadow.pos - delta;
+		var dir = transform.InverseTransformDirection(delta);
+		float z = 0;
+		float x = 0;
+		if (dir.z > 0.1f)
+			z = 0.5f;
+		else if (dir.z < -0.1f)
+			z = -0.5f;
+
+		if (dir.x > 0.1f)
+			x = 0.5f;
+		else if (dir.x < -0.1f)
+			x = -0.5f;
+		var angleX = shadow.rot.eulerAngles.x;
+		if (angleX > 180.0f)
+			angleX -= 360.0f;
+		animator.SetFloat("ForwardZ", z);
+		animator.SetFloat("ForwardX", x);
+		animator.SetFloat("ForwardY", angleX / 5.0f);
 	}
 
 	void FixedUI() {
+		if (playercamera == null)
+			return ;
 		Vector3 pos = transform.position + player_hp_offset;
 		float scale = player_ui_scale / Vector3.Distance(transform.position, playercamera.transform.position);
 		pos = playercamera.WorldToScreenPoint(pos);
@@ -103,55 +127,40 @@ public class ThirdPerson : MonoBehaviour {
 	}
 
 	public void Sync(Vector3 pos, Quaternion rot) {
+		shadow.pos = pos;
+		shadow.pos.y = 0;
+		shadow.rot = rot;
+		sync_time = Time.time;
+
+		sync_src_pos = transform.position;
+		sync_src_pos.y = 0;
+		sync_src_rot = transform.localRotation;
 		if (animator == null)
 			return ;
-		sync_dst_pos= pos;
-		sync_src_pos = transform.position;
-		sync_src_rot = transform.localRotation;
-		sync_dst_rot = rot;
-
-		sync_time = Time.time;
-		sync_dst_pos.y = 0;
-		sync_src_pos.y = 0;
 		animator.speed = 1.0f;
-		FixedAnimator();
-		float turn_amount =  (sync_dst_rot.eulerAngles.y - transform.localRotation.eulerAngles.y) * Mathf.Deg2Rad;
-		animator.SetFloat("Turn", turn_amount * 3, 0.1f, Time.deltaTime);
+	}
+
+	public void SwapWeapon() {
+		animator.SetTrigger("SwapWeapon");
+	}
+
+	public void Shoot(Vector3 point) {
+		weapon.Shoot(point);
+	}
+
+	public void Jump() {
+		animator.SetTrigger("Jump");
+		RB.velocity = Vector3.up * 10;
 	}
 
 	public void OnAnimatorMove()
 	{
 		if (Time.deltaTime > 0.0f) {
-			Vector3 v = (sync_dst_pos - transform.position) / 0.10f;
-			v.y = RB.velocity.y;
-			RB.velocity = v;
-			Quaternion dst = Quaternion.Euler(0.0f, sync_dst_rot.eulerAngles.y, 0.0f);
+			var pos = Vector3.Slerp(transform.position, shadow.pos, 0.1f);
+			pos.y = transform.position.y;
+			transform.position = pos;
+			Quaternion dst = Quaternion.Euler(0.0f, shadow.rot.eulerAngles.y, 0.0f);
 			transform.localRotation = Quaternion.Slerp(sync_src_rot, dst, (Time.time - sync_time) / 0.1f);
-			if (camera_follow && playercamera != null) {
-				var pos = transform.position;
-				var rot = transform.localRotation;
-				var updown = Quaternion.Euler(sync_dst_rot.eulerAngles.x, 0.0f, 0.0f);
-				camera_rot = Quaternion.Slerp(camera_rot, camera_rot * updown, (Time.time - sync_time) / 0.1f);
-				camera_rot = ClampRotationAroundXAxis(camera_rot * updown);
-				playercamera.transform.position = pos;
-				playercamera.transform.localRotation = rot * camera_rot;
-				playercamera.transform.position += playercamera.transform.rotation * camera_pos;
-			}
 		}
 	}
-
-	Quaternion ClampRotationAroundXAxis(Quaternion q)
-	{
-		q.x /= q.w;
-		q.y /= q.w;
-		q.z /= q.w;
-		q.w = 1.0f;
-		float angleX = 2.0f * Mathf.Rad2Deg * Mathf.Atan (q.x);
-		angleX = Mathf.Clamp (angleX, -16.0f, 16.0f);
-		q.x = Mathf.Tan (0.5f * Mathf.Deg2Rad * angleX);
-		return q;
-        }
-
-
-
 }

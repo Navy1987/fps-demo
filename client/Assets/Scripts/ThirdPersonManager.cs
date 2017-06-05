@@ -5,10 +5,8 @@ using zprotobuf;
 using client_zproto;
 
 public class ThirdPersonManager : MonoBehaviour {
-
 	//component
 	public GameObject thirdperson;
-	private LineRenderer aimLine;
 
 	//member
 	private const int RESOLUTION = 10000;
@@ -16,7 +14,6 @@ public class ThirdPersonManager : MonoBehaviour {
 	private Dictionary<int, ThirdPerson> pool = new Dictionary<int, ThirdPerson>();
 
 	void Start() {
-		aimLine = GetComponent<LineRenderer>();
 		//net protocol
 		a_sync sync = new a_sync();
 		a_shoot shoot = new a_shoot();
@@ -65,27 +62,23 @@ public class ThirdPersonManager : MonoBehaviour {
 		Destroy(p.gameObject);
 	}
 
-	private IEnumerator ShotEffectCo()
-	{
-		aimLine.enabled = true;
-		yield return new WaitForSeconds(0.7f);
-		aimLine.enabled = false;
-	}
-
 	private void ShootEffect(int a, int b, Vector3 shoot_pos) {
-		StartCoroutine (ShotEffectCo());
 		var ap = GetCharacter(a);
 		var bp = GetCharacter(b);
 		Vector3 src = ap.transform.position;
 		Vector3 dst = shoot_pos + bp.transform.position;
 		src.y = 1.0f;
+		/*
+		StartCoroutine (ShotEffectCo());
 		aimLine.SetPosition (0, src);
 		aimLine.SetPosition (1, dst);
-		Debug.Log("ShootEffect a:" + a + ":" + b + " Shoot:" + dst);
+		Debug.Log("ShootEffect a:" + a + ":" + b + " Shoot:" + src + dst);
+		*/
+		ap.Shoot(dst);
 	}
 
 	public void Shoot(int a, int b, Vector3 shoot) {
-		//ShootEffect(a, b, shoot);
+		ShootEffect(a, b, shoot);
 		r_shoot req = new r_shoot();
 		req.a = a;
 		req.b = b;
@@ -94,7 +87,7 @@ public class ThirdPersonManager : MonoBehaviour {
 		req.shoot.y = (int)(shoot.y * RESOLUTION);
 		req.shoot.z = (int)(shoot.z * RESOLUTION);
 		Debug.Log("ShootSend x:" + req.shoot.x + ":" + req.shoot.y + ":" + req.shoot.z + shoot);
-		NetInstance.Gate.Send(req);
+		//NetInstance.Gate.Send(req);
 	}
 	////////////net protocol
 
