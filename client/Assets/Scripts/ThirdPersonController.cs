@@ -7,7 +7,8 @@ using client_zproto;
 public class ThirdPersonController : MonoBehaviour {
 	//debug
 	public Text display;
-	public Camera playercamera;
+	public Camera maincamera;
+	public Camera uicamera;
 
 	private float delta = 0;
 	private ThirdPerson player;
@@ -15,7 +16,8 @@ public class ThirdPersonController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start() {
-		CameraManager.main = playercamera;
+		CameraManager.main = maincamera;
+		CameraManager.ui = uicamera;
 		follow.Start();
 		Debug.Log("[Controller] Follow" + follow);
 	}
@@ -54,9 +56,9 @@ public class ThirdPersonController : MonoBehaviour {
 		if (!InputManager.GetFire1())
 			return;
 		RaycastHit hit;
-		Vector3 rayOrigin = playercamera.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 0.0f));
+		Vector3 rayOrigin = maincamera.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 0.0f));
 		Debug.Log("RayOrigin:" + rayOrigin);
-		if (Physics.Raycast(rayOrigin, playercamera.transform.forward, out hit, GameConfig.Instance.weaponRange, 1)) {
+		if (Physics.Raycast(rayOrigin, maincamera.transform.forward, out hit, GameConfig.Instance.weaponRange, 1)) {
 			var hitPoint = hit.point;
 			var hitObj = hit.collider.gameObject;
 			var hitTag = hitObj.tag;
@@ -64,7 +66,7 @@ public class ThirdPersonController : MonoBehaviour {
 			if (hitObj.tag == "Untagged") {
 				return ;
 			}
-			if (Physics.Raycast(rayOrigin, playercamera.transform.forward, out hit, GameConfig.Instance.weaponRange, 1 << 9)) {
+			if (Physics.Raycast(rayOrigin, maincamera.transform.forward, out hit, GameConfig.Instance.weaponRange, 1 << 9)) {
 				var personObj = hit.collider.gameObject;
 				var person = personObj.GetComponent<ThirdPerson>();
 				var hurt = PartHurt.Instance.GetHurt(hitTag);

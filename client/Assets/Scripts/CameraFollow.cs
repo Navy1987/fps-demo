@@ -17,16 +17,21 @@ public class CameraFollow {
 		follow_target = player;
 	}
 
-	public void LateUpdate() {
-		if (follow_target == null)
-			return ;
+	private void Follow(Camera follow) {
 		var pos = follow_target.transform.position;
 		var rot = follow_target.transform.localRotation;
 
-		var src_rot = follow_camera.transform.localRotation;
+		var src_rot = follow.transform.localRotation;
 		var dst_rot = rot * Quaternion.Euler(follow_target.Shadow.rot.eulerAngles.x, 0.0f, 0.0f);
-		follow_camera.transform.localRotation = Quaternion.Slerp(src_rot, dst_rot, 0.5f);
-		follow_camera.transform.position = pos;
-		follow_camera.transform.position += follow_camera.transform.rotation * camera_pos;
+		follow.transform.localRotation = Quaternion.Slerp(src_rot, dst_rot, 0.5f);
+		follow.transform.position = pos;
+		follow.transform.position += follow.transform.rotation * camera_pos;
+	}
+
+	public void LateUpdate() {
+		if (follow_target == null)
+			return ;
+		Follow(follow_camera);
+		Follow(CameraManager.ui);
 	}
 }

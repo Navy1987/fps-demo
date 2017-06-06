@@ -98,15 +98,20 @@ public class ThirdPerson : MonoBehaviour {
 			x = -0.5f;
 		animator.SetFloat("ForwardZ", z);
 		animator.SetFloat("ForwardX", x);
-		Debug.Log("FixedUpdate X Z: [" + x + "][" + z + "]" + dir + "[" + dir.z + "]");
+		//Debug.Log("FixedUpdate X Z: [" + x + "][" + z + "]" + dir + "[" + dir.z + "]");
 	}
 
 	void FixedUI() {
-		if (playercamera == null)
+		var uicamera = CameraManager.ui;
+		if (uicamera == null)
 			return ;
-		Vector3 pos = transform.position + player_hp_offset;
-		float scale = player_ui_scale / Vector3.Distance(transform.position, playercamera.transform.position);
-		pos = playercamera.WorldToScreenPoint(pos);
+		var heading = transform.position - uicamera.transform.position;
+		Debug.Log("Heading:" + Vector3.Dot(uicamera.transform.forward, heading));
+
+		Vector3 wpos = transform.position + player_hp_offset;
+		float scale = player_ui_scale / Vector3.Distance(transform.position, uicamera.transform.position);
+		var pos = uicamera.WorldToScreenPoint(wpos);
+		Debug.Log("FixedUI:" + transform.position + pos);
 		if (pos.x > 0 && pos.y > 0 && pos.z > 0) {
 			player_hp.gameObject.SetActive(true);
 			player_hp.transform.position = pos;
