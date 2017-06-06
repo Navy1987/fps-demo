@@ -507,9 +507,10 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 4636210631576714}
+  - component: {fileID: 135685447782496770}
   m_Layer: 0
   m_Name: head1_head
-  m_TagString: Untagged
+  m_TagString: HitHead
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1920,7 +1921,7 @@ Animator:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1311974530438048}
   m_Enabled: 1
-  m_Avatar: {fileID: 9000000, guid: f3aa36c2aed114223bc6a264d9f9018c, type: 3}
+  m_Avatar: {fileID: 9000000, guid: e1bbd235e91c8044c9aee75a5e305b52, type: 3}
   m_Controller: {fileID: 9100000, guid: e2cf68ff4b1ffda45a77f7307dd789b9, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 1
@@ -2085,6 +2086,18 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!135 &135685447782496770
+SphereCollider:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1411124556891610}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.16561644
+  m_Center: {x: -0.13942365, y: 0.06226664, z: -0.04840329}
 --- !u!136 &136675084282360672
 CapsuleCollider:
   m_ObjectHideFlags: 1
@@ -2136,7 +2149,7 @@ SkinnedMeshRenderer:
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
   m_SkinnedMotionVectors: 1
-  m_Mesh: {fileID: 4300000, guid: f3aa36c2aed114223bc6a264d9f9018c, type: 3}
+  m_Mesh: {fileID: 4300000, guid: e1bbd235e91c8044c9aee75a5e305b52, type: 3}
   m_Bones:
   - {fileID: 4751789485295820}
   - {fileID: 4294559438224108}
