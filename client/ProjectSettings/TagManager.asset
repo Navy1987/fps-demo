@@ -15,6 +15,10 @@ TagManager:
   - HitRightForeArm
   - HitLeftForeArm
   - ThirdPerson
+  - HitLefthand
+  - HitRightHand
+  - HitLeftFoot
+  - HitRightFoot
   layers:
   - Default
   - TransparentFX
