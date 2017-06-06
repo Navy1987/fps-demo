@@ -13,7 +13,7 @@ public class ThirdPerson : MonoBehaviour {
 	public float moving_turnspeed = 360f;
 	public float turn_speed = 180f;
 	public float speed_multiplier = 10f;
-	public float player_ui_scale = 1.0f;
+	public float player_ui_scale = 2.0f;
 	public Slider player_hp;
 	public Vector3 player_hp_offset;
 	private AudioSource gunAudio;
@@ -102,16 +102,12 @@ public class ThirdPerson : MonoBehaviour {
 	}
 
 	void FixedUI() {
-		var uicamera = CameraManager.ui;
+		var uicamera = CameraManager.main;
 		if (uicamera == null)
 			return ;
-		var heading = transform.position - uicamera.transform.position;
-		Debug.Log("Heading:" + Vector3.Dot(uicamera.transform.forward, heading));
-
 		Vector3 wpos = transform.position + player_hp_offset;
 		float scale = player_ui_scale / Vector3.Distance(transform.position, uicamera.transform.position);
 		var pos = uicamera.WorldToScreenPoint(wpos);
-		Debug.Log("FixedUI:" + transform.position + pos);
 		if (pos.x > 0 && pos.y > 0 && pos.z > 0) {
 			player_hp.gameObject.SetActive(true);
 			player_hp.transform.position = pos;

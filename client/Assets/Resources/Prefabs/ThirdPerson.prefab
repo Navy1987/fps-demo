@@ -1964,9 +1964,9 @@ MonoBehaviour:
   moving_turnspeed: 360
   turn_speed: 180
   speed_multiplier: 10
-  player_ui_scale: 1
+  player_ui_scale: 3
   player_hp: {fileID: 114856558159648532}
-  player_hp_offset: {x: 0, y: 0, z: 0}
+  player_hp_offset: {x: 0, y: 2.5, z: 0}
 --- !u!114 &114739756077055972
 MonoBehaviour:
   m_ObjectHideFlags: 1

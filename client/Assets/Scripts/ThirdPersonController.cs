@@ -8,7 +8,6 @@ public class ThirdPersonController : MonoBehaviour {
 	//debug
 	public Text display;
 	public Camera maincamera;
-	public Camera uicamera;
 
 	private float delta = 0;
 	private ThirdPerson player;
@@ -17,7 +16,6 @@ public class ThirdPersonController : MonoBehaviour {
 	// Use this for initialization
 	void Start() {
 		CameraManager.main = maincamera;
-		CameraManager.ui = uicamera;
 		follow.Start();
 		Debug.Log("[Controller] Follow" + follow);
 	}

@@ -6,32 +6,31 @@ public class CameraFollow {
 	private Vector3 camera_pos;
 	private Quaternion camera_rot;
 	private ThirdPerson follow_target;
-	private Camera follow_camera;
+	private Camera maincamera;
 
 	public void Start() {
-		follow_camera = CameraManager.main;
-		camera_pos = follow_camera.transform.position;
+		maincamera = CameraManager.main;
+		camera_pos = maincamera.transform.position;
 	}
 
 	public void Follow(ThirdPerson player) {
 		follow_target = player;
 	}
 
-	private void Follow(Camera follow) {
+	private void MainFollow() {
 		var pos = follow_target.transform.position;
 		var rot = follow_target.transform.localRotation;
 
-		var src_rot = follow.transform.localRotation;
+		var src_rot = maincamera.transform.localRotation;
 		var dst_rot = rot * Quaternion.Euler(follow_target.Shadow.rot.eulerAngles.x, 0.0f, 0.0f);
-		follow.transform.localRotation = Quaternion.Slerp(src_rot, dst_rot, 0.5f);
-		follow.transform.position = pos;
-		follow.transform.position += follow.transform.rotation * camera_pos;
+		maincamera.transform.localRotation = Quaternion.Slerp(src_rot, dst_rot, 0.5f);
+		maincamera.transform.position = pos;
+		maincamera.transform.position += maincamera.transform.rotation * camera_pos;
 	}
 
 	public void LateUpdate() {
 		if (follow_target == null)
 			return ;
-		Follow(follow_camera);
-		Follow(CameraManager.ui);
+		MainFollow();
 	}
 }
