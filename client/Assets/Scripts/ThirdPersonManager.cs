@@ -133,7 +133,7 @@ public class ThirdPersonManager : MonoBehaviour {
 			Debug.Log("ASYC UID NULL:" + uid);
 			return ;
 		}
-		p.Sync(pos, rot);
+		p.MoveTo(pos, rot, false, false);
 	}
 	private void ack_shoot(int err, wire obj) {
 		a_shoot ack = (a_shoot)obj;

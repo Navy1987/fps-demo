@@ -117,37 +117,34 @@ public class ThirdPerson : MonoBehaviour {
 		}
 	}
 
-	void FixedUpdate() {
-		FixedAnimator();
-		FixedUI();
-	}
-
-	public void Sync(Vector3 pos, Quaternion rot) {
+	public void MoveTo(Vector3 pos, Quaternion rot, bool jump, bool crouch) {
 		shadow.pos = pos;
 		shadow.pos.y = 0;
 		shadow.rot = rot;
 		sync_time = Time.time;
-
 		sync_src_rot = transform.localRotation;
+
+		if (jump) {
+			animator.SetTrigger("Jump");
+			RB.velocity = Vector3.up * 10;
+		} else if (crouch) {
+			//TODO:crouch animator
+		}
 		if (animator == null)
 			return ;
 		animator.speed = 1.0f;
-	}
-
-	public void SwapWeapon() {
-		animator.SetTrigger("SwapWeapon");
 	}
 
 	public void Shoot(Vector3 point) {
 		weapon.Shoot(point);
 	}
 
-	public void Jump() {
-		animator.SetTrigger("Jump");
-		RB.velocity = Vector3.up * 10;
+	public void SwapWeapon() {
+		animator.SetTrigger("SwapWeapon");
 	}
 
-	public void OnAnimatorMove()
+	////////////inherit
+	void OnAnimatorMove()
 	{
 		if (Time.deltaTime > 0.0f) {
 			var src = transform.position;
@@ -159,4 +156,10 @@ public class ThirdPerson : MonoBehaviour {
 			transform.localRotation = Quaternion.Slerp(sync_src_rot, dst, (Time.time - sync_time) / 0.1f);
 		}
 	}
+	void FixedUpdate() {
+		FixedAnimator();
+		FixedUI();
+	}
+
+
 }
