@@ -17,7 +17,7 @@ public class WeaponBase : MonoBehaviour {
 	public void Equip(GameObject lefthand, GameObject righthand) {
 		aimLine= GetComponent<LineRenderer>();
 		this.righthand = righthand;
-		firepoint = gameObject;
+		firepoint = Tool.FindChild(transform, "FirePoint");
 		transform.parent = righthand.transform;
 		Debug.Log("Equip:" + righthand);
 	}
@@ -32,13 +32,9 @@ public class WeaponBase : MonoBehaviour {
 		aimLine.SetPosition (0, src);
 		aimLine.SetPosition (1, dst);
 		Debug.Log("ShootEffect Shoot:" + src + dst);
-
 	}
 
 	void FixedUpdate() {
-		if (righthand == null)
-			return ;
-		//weapon.transform.position = righthand.transform.position;
 	}
 }
 

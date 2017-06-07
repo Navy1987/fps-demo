@@ -123,7 +123,6 @@ public class ThirdPerson : MonoBehaviour {
 	}
 
 	public void Sync(Vector3 pos, Quaternion rot) {
-		Debug.Log("Sync:" + pos);
 		shadow.pos = pos;
 		shadow.pos.y = 0;
 		shadow.rot = rot;
