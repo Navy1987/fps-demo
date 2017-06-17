@@ -6,7 +6,8 @@ using client_zproto;
 
 public class ThirdPersonController : MonoBehaviour {
 	//debug
-	public Text display;
+	public Text control;
+	public Text coord;
 	public Camera maincamera;
 
 	private float delta = 0;
@@ -33,7 +34,7 @@ public class ThirdPersonController : MonoBehaviour {
 		float moveX = InputManager.GetMoveX();
 		float moveZ = InputManager.GetMoveZ();
 		Vector3 move = new Vector3(moveX, 0, moveZ);
-		display.text = "x:" + move.x + " y:" + move.y + " z:" + move.z;
+		control.text = "control(" + move.x + "," + move.z + ")";
 		Vector3 forward = move * Time.deltaTime * run_speed * (0.1f / Time.deltaTime);
 		forward = rot * forward;
 		move_pos = player.transform.position + forward;

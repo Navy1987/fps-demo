@@ -8,6 +8,9 @@ public class ShadowTransform {
 	public Quaternion rot;
 };
 
+[RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CapsuleCollider))]
 public class ThirdPerson : MonoBehaviour {
 	//configuration
 	public float moving_turnspeed = 360f;
@@ -58,9 +61,9 @@ public class ThirdPerson : MonoBehaviour {
 	}
 
 	void Start () {
-		Debug.Log("ThirdPerson Start");
 		RB = GetComponent<Rigidbody>();
 		animator = GetComponent<Animator>();
+		Debug.Log("ThirdPerson Start:" + animator);
 		RB.constraints =
 			RigidbodyConstraints.FreezeRotationX |
 			RigidbodyConstraints.FreezeRotationY |
