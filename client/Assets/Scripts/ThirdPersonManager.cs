@@ -39,9 +39,9 @@ public class ThirdPersonManager : MonoBehaviour {
 		if (pool.ContainsKey(uid))
 			return pool[uid];
 		GameObject obj = Instantiate(thirdperson,
-			new Vector3(0, 0, 0), Quaternion.identity);
+			new Vector3(1, 0, 1), Quaternion.identity);
 		ThirdPerson p = obj.GetComponent<ThirdPerson>();
-		Debug.Log("CreateCharacter:"+p);
+		Debug.Log("CreateCharacter:"+p + p.transform.position);
 		p.Uid = uid;
 		pool[uid] = p;
 		return p;

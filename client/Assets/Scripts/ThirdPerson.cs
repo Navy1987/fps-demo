@@ -4,8 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class ShadowTransform {
-	public Vector3 pos;
-	public Quaternion rot;
+	public Vector3 pos = Vector3.zero;
+	public Quaternion rot = Quaternion.identity;
 };
 
 [RequireComponent(typeof(Animator))]

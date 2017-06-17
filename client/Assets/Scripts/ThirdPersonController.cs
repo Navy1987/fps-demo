@@ -12,6 +12,7 @@ public class ThirdPersonController : MonoBehaviour {
 
 	private float delta = 0;
 	private ThirdPerson player;
+	private WorldMap worldmap;
 	private CameraFollow follow = new CameraFollow();
 
 	void MoveController() {
@@ -54,7 +55,6 @@ public class ThirdPersonController : MonoBehaviour {
 		//synchroize
 		if (!GameConfig.Instance.single)
 			ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
-
 	}
 
 	void PlayerFire() {
@@ -96,15 +96,20 @@ public class ThirdPersonController : MonoBehaviour {
 		var pos = player.transform.position;
 		var sx = pos.x.ToString("F1");
 		var sz = pos.z.ToString("F1");
-		player_coord.text = "coord(x:" + sz + ",z:" + sz + ")";
+		player_coord.text = "coord(x:" + sx + ",z:" + sz + ")";
 	}
 	////////////interface
 	public void Attach(ThirdPerson p) {
 		player = p;
 		follow.Follow(p);
+		worldmap.UpdatePosition(p.transform.position);
 	}
 
 	////////////inherit
+	void Awake() {
+		worldmap = GetComponent<WorldMap>();
+		Debug.Log("Awake");
+	}
 	void Start() {
 		CameraManager.main = maincamera;
 		follow.Start();
@@ -122,6 +127,6 @@ public class ThirdPersonController : MonoBehaviour {
 
 	void LateUpdate() {
 		follow.LateUpdate();
+		worldmap.UpdatePosition(player.transform.position);
 	}
-
 }
