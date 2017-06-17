@@ -6,8 +6,8 @@ using client_zproto;
 
 public class ThirdPersonController : MonoBehaviour {
 	//debug
-	public Text control;
-	public Text coord;
+	public Text player_control;
+	public Text player_coord;
 	public Camera maincamera;
 
 	private float delta = 0;
@@ -17,6 +17,10 @@ public class ThirdPersonController : MonoBehaviour {
 	void MoveController() {
 		if (player == null)
 			return ;
+		delta += Time.deltaTime;
+		if (delta < 0.1f)
+			return ;
+		delta -= 0.1f;
 		Vector3 move_pos;
 		Quaternion move_rot;
 		bool move_jump = false;
@@ -34,11 +38,11 @@ public class ThirdPersonController : MonoBehaviour {
 		float moveX = InputManager.GetMoveX();
 		float moveZ = InputManager.GetMoveZ();
 		Vector3 move = new Vector3(moveX, 0, moveZ);
-		control.text = "control(" + move.x + "," + move.z + ")";
+		player_control.text = "input(x:" + move.x.ToString("F1") + ",z:" + move.z.ToString("F1") + ")";
 		Vector3 forward = move * Time.deltaTime * run_speed * (0.1f / Time.deltaTime);
 		forward = rot * forward;
 		move_pos = player.transform.position + forward;
-		//sync
+		//control player
 		var srot = player.Shadow.rot;
 		var angleX = srot.eulerAngles.x - mouseX;
 		Quaternion rotX = Quaternion.Euler(angleX, 0.0f, 0.0f);
@@ -47,6 +51,10 @@ public class ThirdPersonController : MonoBehaviour {
 		//jump crouch
 		move_jump = InputManager.GetJump();
 		player.MoveTo(move_pos, move_rot, move_jump, move_crouch);
+		//synchroize
+		if (!GameConfig.Instance.single)
+			ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
+
 	}
 
 	void PlayerFire() {
@@ -67,7 +75,10 @@ public class ThirdPersonController : MonoBehaviour {
 				var personObj = hit.collider.gameObject;
 				var person = personObj.GetComponent<ThirdPerson>();
 				var hurt = PartHurt.Instance.GetHurt(hitTag);
-				Debug.Log("Hit Part:" + hitTag + " of " + personObj.tag + "[" + person.Uid + "]" + " Hp:" + hurt + " Shoot:" + hitPoint + " Delta:" + (hitPoint - personObj.transform.position));
+				Debug.Log("Hit Part:" + hitTag + " of " + personObj.tag +
+						"[" + person.Uid + "]" +
+						" Hp:" + hurt + " Shoot:" + hitPoint +
+						" Delta:" + (hitPoint - personObj.transform.position));
 				hitPoint -= personObj.transform.position;
 				ThirdPersonManager.Instance.Shoot(player.Uid, person.Uid, hitPoint);
 			}
@@ -81,6 +92,13 @@ public class ThirdPersonController : MonoBehaviour {
 		player.SwapWeapon();
 	}
 
+	void PlayerPos() {
+		var pos = player.transform.position;
+		var sx = pos.x.ToString("F1");
+		var sz = pos.z.ToString("F1");
+		player_coord.text = "coord(x:" + sz + ",z:" + sz + ")";
+	}
+	////////////interface
 	public void Attach(ThirdPerson p) {
 		player = p;
 		follow.Follow(p);
@@ -98,13 +116,8 @@ public class ThirdPersonController : MonoBehaviour {
 			return ;
 		PlayerFire();
 		PlayerSwap();
-		delta += Time.deltaTime;
-		if (delta < 0.1f)
-			return ;
-		delta -= 0.1f;
 		MoveController();
-		if (!GameConfig.Instance.single)
-			ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
+		PlayerPos();
 	}
 
 	void LateUpdate() {
