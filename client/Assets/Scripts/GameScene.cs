@@ -7,78 +7,83 @@ using client_zproto;
 
 public class GameScene: MonoBehaviour {
 	//component
-	public Button enter_btn;
-	public Button leave_btn;
 	//
 	private ThirdPersonController controller;
+	private ThirdPerson mainPlayer;
 
-	// Use this for initialization
-	void Start () {
-		//event
-		enter_btn.onClick.AddListener(on_enter);
-		leave_btn.onClick.AddListener(on_leave);
-
-		//socket
-		a_join join = new a_join();
-		a_battleinfo battle = new a_battleinfo();
-		NetInstance.Gate.Register(join, ack_join);
-		NetInstance.Gate.Register(battle, ack_battle);
-
-		//init
+	void ComponentStart() {
+		CameraManager.main = Camera.main;
 		controller = GetComponent<ThirdPersonController>();
-		Debug.Log("Controller:"+controller);
-		//Screen.lockCursor = true;
-		//standalone mode
 		int uid = Player.Instance.Uid;
-		if (GameConfig.Instance.single) {
-			var p = ThirdPersonManager.Instance.CreateCharacter(uid);
-			controller.Attach(p);
-			//p = ThirdPersonManager.Instance.CreateCharacter(uid + 1);
-		}
+		Vector2 pos = Player.Instance.Pos;
+		mainPlayer = ThirdPersonManager.Instance.CreateCharacter(uid, pos);
+		controller.Attach(mainPlayer);
+		Debug.Log("GameScene MainPlayer:" + pos);
+	}
+	void ProtocolStart() {
+		a_grab @a_grab = new a_grab();
+		a_enter @a_enter = new a_enter();
+		a_leave @a_leave = new a_leave();
+		NetInstance.Gate.Register(@a_grab, ack_grab);
+		NetInstance.Gate.Register(@a_enter, ack_enter);
+		NetInstance.Gate.Register(@a_leave, ack_leave);
 
+		var pos = Player.Instance.Pos;
+		r_enter @r_enter = new r_enter();
+		@r_enter.pos = new vector2();
+		Tool.ToProto(ref @r_enter.pos, pos);
+		NetInstance.Gate.Send(@r_enter);
+		Debug.Log("r_enter");
+	}
+
+	void Start () {
+		ComponentStart();
+		ProtocolStart();
 		return ;
 	}
 
-	// Update is called once per frame
+	///protocol interface
+	void ack_grab(int err, wire obj) {
+		Debug.Log("Grab ack");
+		a_grab ack = (a_grab)obj;
+		Vector2 pos = new Vector2();
+		for (int i = 0; i < ack.players.Length; i++) {
+			var p = ack.players[i];
+			Tool.ToNative(ref pos, p.pos);
+			Debug.Log("[Net]Grab:" + p.uid);
+			ThirdPersonManager.Instance.CreateCharacter(p.uid, pos);
+		}
+	}
+
+	void ack_enter(int err, wire obj) {
+		Debug.Log("a_enter:" + err);
+		if (err != 0)
+			return ;
+		a_enter ack = (a_enter)obj;
+		Debug.Log("[Net]a_enter uid:" + ack.uid + "PlayerUid:" + mainPlayer.Uid);
+		if (ack.uid != Player.Instance.Uid) {
+			Vector2 pos = new Vector2();
+			Debug.Log("ack.pos" + ack.pos + ":" + ack.uid);
+			Tool.ToNative(ref pos, ack.pos);
+			ThirdPersonManager.Instance.CreateCharacter(ack.uid, pos);
+			return;
+		}
+		//grab
+		r_grab @r_grab = new r_grab();
+		@r_grab.pos = new vector2();
+		Tool.ToProto(ref @r_grab.pos, mainPlayer.transform.position);
+		NetInstance.Gate.Send(@r_grab);
+		Debug.Log("r_grab");
+	}
+
+	void ack_leave(int err, wire obj) {
+		Debug.Log("Leave");
+
+	}
+
+	/////unity interface
 	void Update () {
 
 	}
 
-	void on_enter() {
-		Debug.Log("Enter");
-		r_join req = new r_join();
-		req.join = 1;
-		NetInstance.Gate.Send(req);
-	}
-
-	void on_leave() {
-		Debug.Log("Leave");
-		r_join req = new r_join();
-		req.join = 0;
-		NetInstance.Gate.Send(req);
-	}
-
-	///protocol
-	void ack_join(int err, wire obj) {
-		a_join ack = (a_join) obj;
-		Debug.Log("Ack_Join:" +  err + ":" + ack.uid + ":" + ack.join);
-		if (ack.join == 1) {
-			var p = ThirdPersonManager.Instance.CreateCharacter(ack.uid);
-			if (ack.uid == Player.Instance.Uid)
-				controller.Attach(p);
-			r_battleinfo req = new r_battleinfo();
-			NetInstance.Gate.Send(req);
-		} else {
-			ThirdPersonManager.Instance.DeleteCharacter(ack.uid);
-		}
-	}
-
-	void ack_battle(int err, wire obj) {
-		a_battleinfo ack = (a_battleinfo)obj;
-		for (int i = 0; i < ack.uid.Length; i++) {
-			int uid = ack.uid[i];
-			Debug.Log("[GameWnd] BattleInfo CreateCharacter:" + uid);
-			ThirdPersonManager.Instance.CreateCharacter(uid);
-		}
-	}
 }

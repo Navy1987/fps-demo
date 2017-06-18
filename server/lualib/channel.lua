@@ -24,6 +24,30 @@ local event_connect
 local inter_decode = wire.inter_decode
 local inter_encode = wire.server_encode
 
+-----socket protocol
+local sr_register = {
+	rpc = false,
+	event = 0,
+	handler = {}
+}
+
+local sr_online = {
+	rpc = false
+}
+
+local event_key = "OC"
+--[[
+	'O' -- open
+	'C' -- close
+]]--
+
+local function cproto_encode(cmd, ack)
+	cmd = cproto:querytag(cmd)
+	local hdr = string.pack("<I4", cmd)
+	local body = cproto:encode(cmd, ack)
+	return hdr .. body
+end
+
 local function wheel(time)
 	local wheel = time % TIMEOUT
 	return wheel // TIMER
@@ -57,29 +81,30 @@ local function createchannel(gateid)
 		expire[#expire + 1] = id;
 		return core.wait()
 	end
+	local client
 
-	local client = msg.createclient {
+	local function checkconnect()
+		local t = 1000
+		while true do
+			local ok = client:connect()
+			print("connect gateid", gateid, ok)
+			if ok then
+				client:call("sr_register", sr_register)
+				if event_connect then
+					event_connect(client)
+				end
+				return
+			end
+			core.sleep(t)
+		end
+	end
+
+	client = msg.createclient {
 		addr = addr,
-		gateid = gateid,
 		close = function(fd, errno)
 			print("close", fd, errno)
 			wakeupall()
-			if not event_connect then
-				return
-			end
-			core.fork(function()
-				local t = 1000
-				while true do
-					local ok = client:connect()
-					print("connect gateid", gateid, ok)
-					if ok then
-						return
-					end
-					event_connect(client)
-					core.sleep(t)
-					t = t
-				end
-			end)
+			core.fork(checkconnect)
 		end,
 		data = function(fd, d, sz)
 			local uid, cmd, str = inter_decode(d, sz)
@@ -94,6 +119,8 @@ local function createchannel(gateid)
 			end
 		end
 	}
+	client.gateid = gateid
+
 	client.wakeup = function(ack)
 		local s = assert(ack.rpc)
 		local co = rpc_suspend[s]
@@ -134,7 +161,7 @@ local function createchannel(gateid)
 		end
 		return waitfor(ID)
 	end
-	print("creat channel", addr)
+	print("creat channel", addr, client, client.gateid)
 	return client
 end
 
@@ -167,22 +194,6 @@ for _, v in pairs(rpc_ack_cmd) do
 end
 
 -------------interface
-
-local sr_register = {
-	rpc = false,
-	event = 0,
-	handler = {}
-}
-
-local sr_online = {
-	rpc = false
-}
-
-local event_key = "OC"
---[[
-	'O' -- open
-	'C' -- close
-]]--
 
 function M.subscribe(event)
 	local mask = 0
@@ -220,7 +231,6 @@ function M.event_reconnect(e)
 	event_connect = e
 end
 
-local list = {}
 local register = function(gate)
 	local l = sr_register.handler
 	for k, _ in pairs(client_handler) do
@@ -228,8 +238,6 @@ local register = function(gate)
 	end
 	return gate:call("sr_register", sr_register)
 end
-
-M.register = register
 
 function M.online(gate)
 	local ack = gate:call("sr_online", sr_online)
@@ -245,6 +253,37 @@ end
 
 function M.detach(uid)
 	online_uid_gate[uid] = nil
+end
+
+local gate_set = {}
+function M.multicast(uids, cmd, packet)
+	local ack = {
+		uids = false,
+		data = false
+	}
+	local dat = cproto_encode(cmd, packet)
+	for k, _ in pairs(uids) do
+		local gate = online_uid_gate[k]
+		if gate then
+			local g = gate_set[gate]
+			if not g then
+				g = {}
+				gate_set[gate] = g
+			end
+			g[#g + 1] = k
+		else
+			print("incorrect gate of", k)
+		end
+		uids[k] = nil
+	end
+	ack.data = dat
+	for gate, uids in pairs(gate_set) do
+		ack.uids = uids
+		local dat = inter_encode(sproto, 0, "s_multicast", ack)
+		gate:send(dat)
+		gate_set[gate] = nil
+	end
+	return
 end
 
 function M.send(uid, cmd, ack)

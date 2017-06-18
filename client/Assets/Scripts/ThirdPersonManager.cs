@@ -13,19 +13,13 @@ public class ThirdPersonManager : MonoBehaviour {
 	private  static ThirdPersonManager inst = null;
 	private Dictionary<int, ThirdPerson> pool = new Dictionary<int, ThirdPerson>();
 
+	//////////unity interface
 	void Start() {
-		//net protocol
-		a_sync sync = new a_sync();
-		a_shoot shoot = new a_shoot();
-		NetInstance.Gate.Register(sync, ack_sync);
-		NetInstance.Gate.Register(shoot, ack_shoot);
-
+		ProtocolStart();
 	}
 
-	void Update () {
 
-	}
-
+	/////////interface
 	public static ThirdPersonManager Instance {
 		get {
 			if (inst == null)
@@ -34,14 +28,13 @@ public class ThirdPersonManager : MonoBehaviour {
 		}
 	}
 
-	public ThirdPerson CreateCharacter(int uid) {
-		Debug.Log("CreateCharacter:" + uid);
+	public ThirdPerson CreateCharacter(int uid, Vector2 pos) {
 		if (pool.ContainsKey(uid))
 			return pool[uid];
 		GameObject obj = Instantiate(thirdperson,
-			new Vector3(1, 0, 1), Quaternion.identity);
+			new Vector3(pos.x, 0, pos.y), Quaternion.identity);
 		ThirdPerson p = obj.GetComponent<ThirdPerson>();
-		Debug.Log("CreateCharacter:"+p + p.transform.position);
+		Debug.Log("CreateCharacter:" + uid + p + p.transform.position);
 		p.Uid = uid;
 		pool[uid] = p;
 		return p;
@@ -62,23 +55,8 @@ public class ThirdPersonManager : MonoBehaviour {
 		Destroy(p.gameObject);
 	}
 
-	private void ShootEffect(int a, int b, Vector3 shoot_pos) {
-		var ap = GetCharacter(a);
-		var bp = GetCharacter(b);
-		Vector3 src = ap.transform.position;
-		Vector3 dst = shoot_pos + bp.transform.position;
-		src.y = 1.0f;
-		/*
-		StartCoroutine (ShotEffectCo());
-		aimLine.SetPosition (0, src);
-		aimLine.SetPosition (1, dst);
-		Debug.Log("ShootEffect a:" + a + ":" + b + " Shoot:" + src + dst);
-		*/
-		ap.Shoot(dst);
-	}
-
 	public void Shoot(int a, int b, Vector3 shoot) {
-		ShootEffect(a, b, shoot);
+		/*
 		r_shoot req = new r_shoot();
 		req.a = a;
 		req.b = b;
@@ -87,45 +65,32 @@ public class ThirdPersonManager : MonoBehaviour {
 		req.shoot.y = (int)(shoot.y * RESOLUTION);
 		req.shoot.z = (int)(shoot.z * RESOLUTION);
 		Debug.Log("ShootSend x:" + req.shoot.x + ":" + req.shoot.y + ":" + req.shoot.z + shoot);
-		//NetInstance.Gate.Send(req);
+		NetInstance.Gate.Send(req);
+		*/
 	}
 	////////////net protocol
 
-	public void SyncCharacter(int uid) {
-		ThirdPerson player = GetCharacter(uid);
-		r_sync sync = new r_sync();
-		sync.pos = new vector3();
-		sync.rot = new rotation();
-		sync.pos.x = (int)(player.transform.position.x * RESOLUTION);
-		sync.pos.y = (int)(player.transform.position.y * RESOLUTION);
-		sync.pos.z = (int)(player.transform.position.z * RESOLUTION);
-		sync.rot.x = (int)(player.transform.rotation.x * RESOLUTION);
-		sync.rot.y = (int)(player.transform.rotation.y * RESOLUTION);
-		sync.rot.z = (int)(player.transform.rotation.z * RESOLUTION);
-		sync.rot.w = (int)(player.transform.rotation.w * RESOLUTION);
-		/*
-		Debug.Log("SendSync" + "uid:"+ uid + ":" +
-				transform.position + transform.rotation +
-				sync.pos.x + "," +sync.pos.y + "," + sync.pos.z
-				);
-		*/
-		NetInstance.Gate.Send(sync);
-
+	void ProtocolStart() {
+		a_move @a_move = new a_move();
+		NetInstance.Gate.Register(@a_move, ack_move);
 	}
 
-	private void ack_sync(int err, wire obj) {
-		a_sync ack = (a_sync)obj;
+
+	public void SyncCharacter(int uid) {
+		ThirdPerson player = GetCharacter(uid);
+		r_move @r_move = new r_move();
+		@r_move.pos = new vector2();
+		@r_move.rot = new rotation();
+		Tool.ToProto(ref @r_move.pos, player.transform.position);
+		Tool.ToProto(ref @r_move.rot, player.transform.rotation);
+		NetInstance.Gate.Send(@r_move);
+		Debug.Log("r_move");
+	}
+
+	private void ack_move(int err, wire obj) {
+		a_move ack = (a_move)obj;
+		Debug.Log("a_move:" + err + ":" + ack.uid + ack.pos);
 		int uid = ack.uid;
-		Vector3 pos = new Vector3();
-		pos.x = (float)ack.pos.x / RESOLUTION;
-		pos.y = (float)ack.pos.y / RESOLUTION;
-		pos.z = (float)ack.pos.z / RESOLUTION;
-		Quaternion rot = new Quaternion();
-		rot.x = (float)ack.rot.x / RESOLUTION;
-		rot.y = (float)ack.rot.y / RESOLUTION;
-		rot.z = (float)ack.rot.z / RESOLUTION;
-		rot.w = (float)ack.rot.w / RESOLUTION;
-		//Debug.Log("RecvSync" + "uid:"+ uid + ":" + ack.pos.x + "," + ack.pos.y + "," + ack.pos.z + pos + rot);
 		if (Player.Instance.Uid == uid)
 			return ;
 		ThirdPerson p = GetCharacter(uid);
@@ -133,13 +98,11 @@ public class ThirdPersonManager : MonoBehaviour {
 			Debug.Log("ASYC UID NULL:" + uid);
 			return ;
 		}
+		Vector3 pos = new Vector3();
+		Quaternion rot = new Quaternion();
+		Tool.ToNative(ref pos, ack.pos);
+		Tool.ToNative(ref rot, ack.rot);
 		p.MoveTo(pos, rot, false, false);
-	}
-	private void ack_shoot(int err, wire obj) {
-		a_shoot ack = (a_shoot)obj;
-		var shoot = ack.shoot;
-		Vector3 point = new Vector3((float)shoot.x / RESOLUTION, (float)shoot.y / RESOLUTION, (float)shoot.z / RESOLUTION);
-		Debug.Log("ShootRecv x:" + shoot.x + ":" + shoot.y + ":" + shoot.z + point);
-		ShootEffect(ack.a, ack.b, point);
+		Debug.Log("ack_move uid:" + uid + pos + rot);
 	}
 }

@@ -112,8 +112,11 @@ public class LoginWnd : MonoBehaviour {
 	}
 
 	void ack_login_gate(int err, wire obj) {
-		Debug.Log("login_gate!" + err);
-		Player.Instance.Init(uid);
+		a_login_gate ack = (a_login_gate)obj;
+		Vector2 pos = new Vector2();
+		Debug.Log("login_gate!" + err + "x:" + ack.pos.x + " z:" + ack.pos.z);
+		Tool.ToNative(ref pos, ack.pos);
+		Player.Instance.Init(uid, pos);
 		SceneManager.Instance.SwitchScene("GameScene");
 	}
 }

@@ -26,7 +26,6 @@ class MapData {
 
 public class WorldMap : MonoBehaviour {
 	public MapPart[] maplist;
-	private int mapid = 0;
 	private Vector3 EXPAND = Vector3.one * 20.0f;
 	private Bounds mapbound = new Bounds(Vector3.zero, Vector3.zero);
 	private Dictionary<MapPart, MapData>[] map_pingpong = new Dictionary<MapPart, MapData>[2];

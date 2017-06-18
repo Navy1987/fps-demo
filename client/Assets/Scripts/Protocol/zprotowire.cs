@@ -83,13 +83,23 @@ namespace zprotobuf
 			return err;
 		}
 
+		public virtual int _serialize(out byte[] dat) {
+			dat = null;
+			Debug.Assert("NotImplement" == null);
+			return 0;
+		}
+		public virtual int _parse(byte[] dat, int size) {
+			Debug.Assert("NotImplement" == null);
+			return 0;
+		}
+		public virtual int _tag() {
+			Debug.Assert("NotImplement" == null);
+			return 0;
+		}
 		//abstract function
 		public abstract string _name();
 		protected abstract int _encode_field(ref dll.args arg);
 		protected abstract int _decode_field(ref dll.args arg);
-		public abstract int _serialize(out byte[] dat);
-		public abstract int _parse(byte[] dat, int size);
-		public abstract int _tag();
 	}
 
 	public class wiretree {

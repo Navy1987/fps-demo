@@ -8,11 +8,11 @@ public class ThirdPersonController : MonoBehaviour {
 	//debug
 	public Text player_control;
 	public Text player_coord;
-	public Camera maincamera;
 
 	private float delta = 0;
 	private ThirdPerson player;
 	private WorldMap worldmap;
+	private Camera maincamera;
 	private CameraFollow follow = new CameraFollow();
 
 	void MoveController() {
@@ -52,9 +52,6 @@ public class ThirdPersonController : MonoBehaviour {
 		//jump crouch
 		move_jump = InputManager.GetJump();
 		player.MoveTo(move_pos, move_rot, move_jump, move_crouch);
-		//synchroize
-		if (!GameConfig.Instance.single)
-			ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
 	}
 
 	void PlayerFire() {
@@ -92,11 +89,17 @@ public class ThirdPersonController : MonoBehaviour {
 		player.SwapWeapon();
 	}
 
+	private float player_pos_sync = 0.0f;
 	void PlayerPos() {
 		var pos = player.transform.position;
 		var sx = pos.x.ToString("F1");
 		var sz = pos.z.ToString("F1");
 		player_coord.text = "coord(x:" + sx + ",z:" + sz + ")";
+		player_pos_sync += Time.deltaTime;
+		if (player_pos_sync < 0.1f)
+			return ;
+		player_pos_sync -= 0.1f;
+		ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
 	}
 	////////////interface
 	public void Attach(ThirdPerson p) {
@@ -108,10 +111,10 @@ public class ThirdPersonController : MonoBehaviour {
 	////////////inherit
 	void Awake() {
 		worldmap = GetComponent<WorldMap>();
+		maincamera = Camera.main;
 		Debug.Log("Awake");
 	}
 	void Start() {
-		CameraManager.main = maincamera;
 		follow.Start();
 		Debug.Log("[Controller] Follow" + follow);
 	}
@@ -127,6 +130,7 @@ public class ThirdPersonController : MonoBehaviour {
 
 	void LateUpdate() {
 		follow.LateUpdate();
-		worldmap.UpdatePosition(player.transform.position);
+		if (player)
+			worldmap.UpdatePosition(player.transform.position);
 	}
 }

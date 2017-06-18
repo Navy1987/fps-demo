@@ -3,6 +3,7 @@ local env = require "silly.env"
 local msg = require "saux.msg"
 local const = require "const"
 local token = require "token"
+local np = require "netpacket"
 local cproto = require "protocol.client"
 local sproto = require "protocol.server"
 local wire = require "virtualsocket.wire"
@@ -77,6 +78,7 @@ local function gate_login(gatefd, uid)
 end
 
 local function broker_clear(brokerfd)
+	print("broker_clear")
 	subscribe_login[brokerfd] = nil
 	subscribe_logout[brokerfd] = nil
 	for k, v in pairs(broker_handler) do
@@ -115,7 +117,12 @@ gate_inst = msg.createserver {
 		end
 	end
 }
-
+local a_login_gate = {
+	pos = {
+		x = 1000,
+		z = 1000,
+	}
+}
 CCMD[cproto:querytag("r_login_gate")] = function(fd, req)
 	local uid = req.uid
 	local ok = token.check(uid, req.session)
@@ -125,7 +132,7 @@ CCMD[cproto:querytag("r_login_gate")] = function(fd, req)
 		return
 	end
 	gate_login(fd, uid)
-	sendclient(fd, "a_login_gate", const.EMPTY)
+	sendclient(fd, "a_login_gate", a_login_gate)
 end
 
 ----------------------------------------------------
@@ -147,6 +154,7 @@ broker_inst = msg.createserver {
 		end
 		local gatefd = online_uid_gatefd[uid]
 		if gatefd then
+			print("[gate] forward uid:", uid)
 			gate_inst:send(gatefd, data:sub(4+1))
 		else
 			print("disconnect uid", uid)
@@ -202,6 +210,23 @@ SCMD[sproto:querytag("sr_online")] = function(fd, req)
 	end
 	send_server(fd, "sa_online", req)
 	print("sr_online")
+end
+
+SCMD[sproto:querytag("s_multicast")] = function(fd, req)
+	local uids = req.uids
+	local dat = req.data
+	local p, sz = np.pack(dat)
+	local m = core.packmulti(p, sz, #uids)
+	np.drop(p)
+	for _, uid in pairs(uids) do
+		local fd = online_uid_gatefd[uid]
+		print("Multicast", uid)
+		if not fd then
+			core.freemulti(m, sz)
+		else
+			local ok = broker_inst:multicast(fd, m, sz)
+		end
+	end
 end
 
 ----------------------------------------------------

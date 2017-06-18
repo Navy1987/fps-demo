@@ -6,6 +6,11 @@ vector3 {
 	.z:integer 3
 }
 
+vector2 {
+	.x:integer 1
+	.z:integer 2
+}
+
 rotation {
 	.x:integer 1
 	.y:integer 2
@@ -35,10 +40,10 @@ r_login_gate 0x103 {
 }
 
 a_login_gate 0x104 {
-
+	.pos:vector2 1
 }
 
-####################
+#################### account
 r_create 0x110 {
 	.user:string 1
 	.passwd:string 2
@@ -54,6 +59,47 @@ r_challenge 0x112 {
 
 a_challenge 0x113 {
 	.randomkey:string 1
+}
+
+################### sync
+r_grab 0x120 {
+	.pos:vector2 1
+}
+
+a_grab 0x121 {
+	player {
+		.uid:integer 1
+		.pos:vector2 2
+	}
+	.players:player[] 1
+}
+
+r_enter 0x122 {
+	.pos:vector2 1
+}
+
+a_enter 0x123 {
+	.uid:integer 1
+	.pos:vector2 2
+}
+
+r_move 0x124 {
+	.pos:vector2 1
+	.rot:rotation 2
+}
+
+a_move 0x125 {
+	.uid:integer 1
+	.pos:vector2 2
+	.rot:rotation 3
+}
+
+r_leave 0x126 {
+
+}
+
+a_leave 0x127 {
+	.uid:integer 1
 }
 
 #######

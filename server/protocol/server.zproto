@@ -45,4 +45,8 @@ sa_online 0x0b {
 	.uid:integer[] 2
 }
 
+s_multicast 0x0c {
+	.uids:integer[] 1
+	.data:string 2
+}
 
