@@ -5,7 +5,7 @@ local db = require "db"
 local const = require "const"
 local login = require "logind"
 local router = require "router"
-local gaterpc = require "channel"
+local channel = require "channel"
 local errno = require "protocol.errno"
 
 local challenge_key = {}
@@ -74,7 +74,7 @@ local function auth(fd, user, passwd)
 	if not kick_gate then
 		return uid
 	end
-	local g = gaterpc.gate(kick_gate)
+	local g = channel.gate(kick_gate)
 	assert(g, kick_gate)
 	sr_kick.uid = uid
 	local ack = g:call("sr_kick", sr_kick)
@@ -90,7 +90,7 @@ local function r_login(fd, req)
 		return login.error(fd, "a_login", err)
 	end
 	local gateid = req.gateid
-	local gate = gaterpc.gate(gateid)
+	local gate = channel.gate(gateid)
 	if not gate then
 		return login.error(fd, "a_login", errno.ACCOUNT_NO_GATEID)
 	end
@@ -111,4 +111,27 @@ end
 router.register("r_create", r_create)
 router.register("r_challenge", r_challenge)
 router.register("r_login", r_login)
+
+local gateonline_init = false
+local sr_gateonline = {
+	rpc = false,
+}
+local function e_connect(gate)
+	--only startup need synchroize the useronline info
+	if gateonline_init then
+		return
+	end
+	local ack = gate:call("sr_gateonline", sr_gateonline)
+	if not ack then
+		print("[login] reconnect gate:", gate.gateid, "fail")
+		return
+	end
+	gateonline_init = true
+	for _, uid in pairs(ack.uids) do
+		print("[login] e_connect uid", uid, "gateid", gate.gateid)
+		uid_online_gate[uid] = gate.gateid
+	end
+end
+
+channel.hook_connect(e_connect)
 

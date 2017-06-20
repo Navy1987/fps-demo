@@ -1,8 +1,8 @@
 sr_register 0x01 {
 	.rpc:integer 1
-	# bit 0 -> open; bit 2 --> close
-	.event:integer 2
-	.handler:integer[] 3
+	.id:integer 2
+	.typ:string 3
+	.handler:integer[] 4
 }
 
 sa_register 0x02 {
@@ -48,5 +48,52 @@ sa_online 0x0b {
 s_multicast 0x0c {
 	.uids:integer[] 1
 	.data:string 2
+}
+
+sr_gateonline 0x0d {
+	.rpc:integer 1
+}
+
+sa_gateonline 0x0e {
+	.rpc:integer 1
+	.uids:integer[] 2
+}
+
+#scene players in gate
+sr_sceneonline 0x0f {
+	.rpc:integer 1
+	.sceneid:integer 2
+}
+
+sa_sceneonline 0x10 {
+	.rpc:integer 1
+	.uids:integer[] 2
+}
+
+vector2 {
+	.x:integer 1
+	.z:integer 2
+}
+
+rotation {
+	.x:integer 1
+	.y:integer 2
+	.z:integer 3
+	.w:integer 4
+}
+
+sr_locateplayer 0x11 {
+	.rpc:integer 1
+	.uids:integer[] 2
+}
+
+sa_locateplayer 0x12 {
+	player {
+		.uid:integer 1
+		.pos:vector2 2
+		.rot:rotation 3
+	}
+	.rpc:integer 1
+	.players:player[] 2
 }
 

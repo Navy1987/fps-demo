@@ -14,7 +14,7 @@ core.start(function()
 	print("db start", ok)
 	ok = login:start()
 	print("logind start", ok)
-	ok = channel:start()
+	ok = channel.start(0, "login")
 	print("channel start", ok)
 end)
 

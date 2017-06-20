@@ -1,10 +1,11 @@
 local core = require "silly.core"
 local env = require "silly.env"
 local token = require "token"
-local center = require "center"
+local bridge = require "bridge"
+local agent = require "agent"
 
 core.start(function()
-	center.start()
+	bridge.start(agent)
 	token.start()
 end)
 

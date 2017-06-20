@@ -11,8 +11,11 @@ public class GameScene: MonoBehaviour {
 	private ThirdPersonController controller;
 	private ThirdPerson mainPlayer;
 
-	void ComponentStart() {
+	void Awake() {
 		CameraManager.main = Camera.main;
+	}
+
+	void ComponentStart() {
 		controller = GetComponent<ThirdPersonController>();
 		int uid = Player.Instance.Uid;
 		Vector2 pos = Player.Instance.Pos;

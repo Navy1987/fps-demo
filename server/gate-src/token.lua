@@ -5,7 +5,7 @@ local proto = require "protocol.server"
 local rand = math.random
 
 local TIMER = 1000
-local TIMEOUT = 5000
+local TIMEOUT = 500000
 
 local uid_token = {}
 local expire_uid = {}
@@ -27,7 +27,7 @@ local function expire()
 	local wid = wheel(core.current())
 	local e = expire_uid[wid]
 	for k, v in pairs(e) do
-		print("expired token", v)
+		print("[gate] token expired token", v)
 		uid_token[v] = nil
 		e[k] = nil
 	end
@@ -58,7 +58,7 @@ function M.kick(uid)
 end
 
 function M.start()
-	print("gate token start")
+	print("[gate] token start")
 	core.timeout(TIMER, expire)
 end
 

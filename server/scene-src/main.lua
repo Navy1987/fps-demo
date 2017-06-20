@@ -3,10 +3,9 @@ local channel = require "channel"
 local scene = require "scene"
 
 core.start(function()
-	local ok = channel.subscribe("")
-	print("channel subscribe", ok)
-	local ok = channel.start()
-	print("channel start", ok)
-	scene:start()
+	local ok = channel.start(1, "scene")
+	print("[scene] channel start", ok)
+	local ok = scene:start()
+	print("[scene] scene start", ok)
 end)
 

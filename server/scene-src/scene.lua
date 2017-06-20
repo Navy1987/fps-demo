@@ -1,8 +1,11 @@
 local core = require "silly.core"
+local env = require "silly.env"
+local const = require "const"
 local log = require "log"
 local channel = require "channel"
 local errno = require "protocol.errno"
 
+local SCENEID = assert(tonumber(env.get("sceneid")), "sceneid")
 local GRID_SIZE = 10000;
 local X_POWER = 10000
 local X_OFFSET = 1 * X_POWER + 0
@@ -212,18 +215,48 @@ channel.reg_client("r_move", r_move)
 channel.reg_client("r_leave", r_leave)
 
 function M.start()
-	print("gates")
+	return true
 end
 
 local function s_logout(uid, _)
 	print("s_logout", uid)
-	close(uid)
+	local p = PLAYER[uid]
+	if p then
+		PLAYER[uid] = nil
+		GRID[p.grid][uid] = nil
+	end
 	channel.detach(uid)
 end
 
---TODO:process reconnect
---TODO:reimplement subscribe of channel
+local sr_sceneonline = {
+	rpc = false,
+	sceneid = SCENEID,
+}
+local sr_locateplayer = {
+	rpc = false,
+	uids = false,
+}
+local function e_connect(gate)
+	local ack = gate:call("sr_sceneonline", sr_sceneonline)
+	if not ack then
+		print("[scene] sr_sceneonline fail on gate:", gate.gateid)
+		return
+	end
+	for _, v in pairs(ack.uids) do
+		print("[scene] e_connect online uid", v)
+	end
+	sr_locateplayer.uids = ack.uids
+	ack = gate:call("sr_locateplayer", sr_locateplayer)
+	if not ack then
+		print("[scene] sr_locateplayer fail on gate:", gate.gateid)
+		return
+	end
+	for _, v in pairs(ack.players) do
+		print("[scene] e_connect locate uid", v.uid, v.pos, v.rot)
+	end
+end
 
 channel.reg_server("s_logout", s_logout)
+channel.hook_connect(e_connect)
 
 return M

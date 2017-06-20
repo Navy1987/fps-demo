@@ -27,7 +27,8 @@ local inter_encode = wire.server_encode
 -----socket protocol
 local sr_register = {
 	rpc = false,
-	event = 0,
+	id = false,
+	typ = false,
 	handler = {}
 }
 
@@ -67,8 +68,8 @@ local function createchannel(gateid)
 	end
 
 	local function wakeupall()
-		for k, _ in pairs(rpc_suspend) do
-			core.wakeup(k)
+		for k, co in pairs(rpc_suspend) do
+			core.wakeup(co)
 			rpc_suspend[k] = nil
 		end
 	end
@@ -161,7 +162,7 @@ local function createchannel(gateid)
 		end
 		return waitfor(ID)
 	end
-	print("creat channel", addr, client, client.gateid)
+	print("[channel] creat", addr, client, client.gateid)
 	return client
 end
 
@@ -177,7 +178,6 @@ core.timeout(TIMER, timer)
 ------------rpc handler
 
 local function rpc_ack(uid, ack, gateid)
-	print("rpc_ack", gateid)
 	local g = gate_channel[gateid]
 	g.wakeup(ack)
 end
@@ -187,6 +187,9 @@ local rpc_ack_cmd = {
 	"sa_session",
 	"sa_kick",
 	"sa_online",
+	"sa_gateonline",
+	"sa_sceneonline",
+	"sa_locateplayer",
 }
 
 for _, v in pairs(rpc_ack_cmd) do
@@ -194,20 +197,6 @@ for _, v in pairs(rpc_ack_cmd) do
 end
 
 -------------interface
-
-function M.subscribe(event)
-	local mask = 0
-	event = string.upper(event)
-	for i = 1, #event do
-		local n = event:byte(i)
-		if n == event_key:byte(1) then -- open
-			mask = mask | const.EVENT_OPEN
-		elseif n == event_key:byte(2) then -- close
-			mask = mask | const.EVENT_CLOSE
-		end
-	end
-	sr_register.event = mask
-end
 
 function M.reg_client(cmd, cb)
 	cmd = cproto:querytag(cmd)
@@ -227,15 +216,11 @@ function M.gates()
 	return gate_channel
 end
 
-function M.event_reconnect(e)
+function M.hook_connect(e)
 	event_connect = e
 end
 
 local register = function(gate)
-	local l = sr_register.handler
-	for k, _ in pairs(client_handler) do
-		l[#l + 1] = k
-	end
 	return gate:call("sr_register", sr_register)
 end
 
@@ -304,9 +289,15 @@ function M.sendgate(gateid, uid, cmd, ack)
 	return ch:send(dat)
 end
 
-function M.start()
+function M.start(id, typ)
 	local count = 0
 	local gateid = 1
+	sr_register.id = id
+	sr_register.typ = typ
+	local l = sr_register.handler
+	for k, _ in pairs(client_handler) do
+		l[#l + 1] = k
+	end
 	while true do
 		local inst = createchannel(gateid)
 		if not inst then
@@ -315,7 +306,10 @@ function M.start()
 		gate_channel[gateid] = inst
 		count = count + 1
 		if inst:connect() and register(inst) then
-			print("gate channel connect ok", inst.addr)
+			print("[channel] connect gate", inst.addr, gateid)
+			if event_connect then
+				event_connect(inst)
+			end
 		end
 		gateid = gateid + 1
 	end
