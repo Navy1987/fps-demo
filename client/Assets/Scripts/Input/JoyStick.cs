@@ -24,7 +24,7 @@ public class JoyStick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		control = Vector2.zero;
 	}
 
-	void Control(Vector3 mousePos3) {
+	void Process(Vector3 mousePos3) {
 		var c = CameraManager.ui;
 		mousePos3.z = 0.0f;
 		mousePos3 = c.ScreenToWorldPoint(mousePos3);
@@ -35,11 +35,21 @@ public class JoyStick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		GameInstance.console.Log("OnPointerUp:" + control);
 	}
 
+	public Vector2 Move {
+		get {
+			return control;
+		}
+	}
+
+	void Awake() {
+		GameInstance.joystick = this;
+	}
+
 #if UNITY_EDITOR
 	void Update () {
 		if (_ID == INVALID)
 			return ;
-		Control(Input.mousePosition);
+		Process(Input.mousePosition);
 	}
 #else
 	void Update() {
@@ -48,35 +58,7 @@ public class JoyStick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		if (Input.touchCount < _ID + 1)
 			return ;
 		var touch = Input.touches[_ID].position;
-		Control(touch);
+		Process(touch);
 	}
 #endif
-/*
-	if (!m_Dragging)
-			{
-				return;
-			}
-			if (Input.touchCount >= m_Id + 1 && m_Id != -1)
-			{
-#if !UNITY_EDITOR
-
-            if (controlStyle == ControlStyle.Swipe)
-            {
-                m_Center = m_PreviousTouchPos;
-                m_PreviousTouchPos = Input.touches[m_Id].position;
-            }
-            Vector2 pointerDelta = new Vector2(Input.touches[m_Id].position.x - m_Center.x , Input.touches[m_Id].position.y - m_Center.y).normalized;
-            pointerDelta.x *= Xsensitivity;
-            pointerDelta.y *= Ysensitivity;
-#else
-				Vector2 pointerDelta;
-				pointerDelta.x = Input.mousePosition.x - m_PreviousMouse.x;
-				pointerDelta.y = Input.mousePosition.y - m_PreviousMouse.y;
-				m_PreviousMouse = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0f);
-#endif
-				UpdateVirtualAxes(new Vector3(pointerDelta.x, pointerDelta.y, 0));
-			}
-		}
-	}
-*/
 }

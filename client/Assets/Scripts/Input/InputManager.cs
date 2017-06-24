@@ -5,16 +5,17 @@ using UnityEngine;
 public class InputManager : MonoBehaviour {
 
 	public static float GetMoveX() {
-		return Input.GetAxis("Horizontal");
+		return 0.0f;
 	}
 	public static float GetMoveZ() {
-		return Input.GetAxis("Vertical");
+		return GameInstance.joystick.Move.y * Time.deltaTime;
 	}
 	public static float GetTurnX() {
-		return Input.GetAxis("Mouse Y");
+		return 0.0f;
 	}
 	public static float GetTurnY() {
-		return Input.GetAxis("Mouse X");
+		Vector2 move = GameInstance.joystick.Move;
+		return Mathf.Atan2(move.x, move.y);
 	}
 	public static bool GetFire1() {
 		return Input.GetButtonDown("Fire1");
