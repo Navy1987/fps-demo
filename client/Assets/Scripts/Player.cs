@@ -5,7 +5,7 @@ using UnityEngine;
 public class Player {
 	private static Player inst = null;
 	private int uid = 0;
-	private Vector2 pos;
+	private Vector2 pos = new Vector2(1.0f, 1.0f);
 	public static Player Instance {
 		get {
 			if (inst == null)

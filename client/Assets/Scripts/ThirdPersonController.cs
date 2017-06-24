@@ -99,7 +99,7 @@ public class ThirdPersonController : MonoBehaviour {
 		if (player_pos_sync < 0.1f)
 			return ;
 		player_pos_sync -= 0.1f;
-		ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
+		//ThirdPersonManager.Instance.SyncCharacter(Player.Instance.Uid);
 	}
 	////////////interface
 	public void Attach(ThirdPerson p) {

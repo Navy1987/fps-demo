@@ -40,7 +40,6 @@ class Tool {
 		dst.w = (float)src.w / (float)RESOLUTION;
 	}
 
-
 	public static GameObject FindChild(Transform parent, string childName) {
 		var f = parent.Find(childName);
 		if (f != null)

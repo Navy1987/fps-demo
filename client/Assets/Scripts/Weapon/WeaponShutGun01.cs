@@ -18,8 +18,8 @@ public class WeaponShutGun01 : WeaponBase {
 		aimLine= GetComponent<LineRenderer>();
 		this.righthand = righthand;
 		firepoint = Tool.FindChild(transform, "FirePoint");
-		transform.parent = righthand.transform;
-		Debug.Log("Equip:" + righthand);
+		transform.parent = this.righthand.transform;
+		Debug.Log("Equip:" + this.righthand);
 	}
 
 	public override void Unload() {

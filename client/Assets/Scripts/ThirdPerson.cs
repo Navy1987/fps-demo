@@ -19,7 +19,6 @@ public class ThirdPerson : MonoBehaviour {
 	public float player_ui_scale = 2.0f;
 	public Slider player_hp;
 	public Vector3 player_hp_offset;
-	private AudioSource gunAudio;
 	//component
 	private Rigidbody RB;
 	private Animator animator;
@@ -35,10 +34,6 @@ public class ThirdPerson : MonoBehaviour {
 	private int uid;
 	private ShadowTransform shadow = new ShadowTransform();
 	private float sync_time;
-
-	//camera
-	Camera playercamera;
-
 
 	public int Uid {
 		get { return uid; }
@@ -71,8 +66,6 @@ public class ThirdPerson : MonoBehaviour {
 		sync_src_rot = transform.localRotation;
 		shadow.pos = transform.position;
 		shadow.rot = transform.localRotation;
-		playercamera = CameraManager.main;
-		gunAudio = GetComponent<AudioSource>();
 		lefthand= Tool.FindChild(transform, "leftArm1_LoResHand");
 		righthand = Tool.FindChild(transform, "rightArm1_LoResHand");
 		SwitchWeapon("shotgun_01");

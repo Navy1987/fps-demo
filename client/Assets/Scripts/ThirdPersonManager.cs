@@ -84,7 +84,7 @@ public class ThirdPersonManager : MonoBehaviour {
 		Tool.ToProto(ref @r_move.pos, player.transform.position);
 		Tool.ToProto(ref @r_move.rot, player.transform.rotation);
 		NetInstance.Gate.Send(@r_move);
-		Debug.Log("r_move");
+		//Debug.Log("r_move");
 	}
 
 	private void ack_move(int err, wire obj) {
